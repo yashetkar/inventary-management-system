@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Management System</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v=2.0.1">
+</head>
+<body>
+
+    <!-- ================= AUTH LAYER ================= -->
+    <div id="auth-layer" class="auth-layer">
+        <!-- Animated floating orbs -->
+        <div class="auth-orb auth-orb-1"></div>
+        <div class="auth-orb auth-orb-2"></div>
+        <div class="auth-orb auth-orb-3"></div>
+        <div class="auth-card">
+            <div class="auth-left">
+                <h2>ASSET<br>MANAGEMENT</h2>
+                <p>Track Assets<br>Manage Inventory<br>Control Devices</p>
+                <div class="auth-decor"></div>
+            </div>
+            <div class="auth-right">
+                <div class="auth-header">
+                    <h1>Login</h1>
+                    <p>Enter your credentials to access the system</p>
+                </div>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" placeholder="Enter username" required autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="password" placeholder="Enter password" required autocomplete="current-password">
+                            <span id="toggle-password-btn" class="toggle-password-icon">
+                                <i class="fa-regular fa-eye"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">SIGN IN</button>
+                    <div id="login-error" class="error-msg"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= APP LAYER ================= -->
+    <div id="app-layer" class="app-layer" style="display: none;">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar collapsed" id="app-sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-box-open brand-icon"></i>
+                <div class="brand-name">
+                    <h3>Asset Manager</h3>
+                    <p>SYSTEM DASHBOARD</p>
+                </div>
+                <button id="sidebar-toggle-btn" class="sidebar-toggle" title="Toggle Sidebar">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-view="inventory">
+                    <i class="fa-solid fa-warehouse"></i>
+                    <span>Inventory</span>
+                </a>
+                <a href="#" class="nav-item" data-view="ewaste">
+                    <i class="fa-solid fa-trash-can"></i>
+                    <span>E-Waste Logs</span>
+                </a>
+                <a href="#" class="nav-item" data-view="returns">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>Returns History</span>
+                </a>
+                <a href="#" class="nav-item" data-view="reports">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="#" class="nav-item" data-view="security">
+                    <i class="fa-solid fa-key"></i>
+                    <span>Security Settings</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="profile-avatar"><i class="fa-solid fa-user-shield"></i></div>
+                    <div class="profile-info">
+                        <h4 id="user-display-name">Admin</h4>
+                        <p>Authorized Agent</p>
+                    </div>
+                </div>
+                <button id="logout-btn" class="btn btn-logout">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN WINDOW -->
+        <main class="main-content">
+            
+            <!-- HEADER BAR -->
+            <header class="header-bar">
+                <div class="header-left">
+                    <h2 id="view-title">Inventory Overview</h2>
+                    <div class="workspace-selector-container">
+                        <label for="active-workspace-select">Workspace:</label>
+                        <select id="active-workspace-select" class="workspace-select"></select>
+                        <button id="add-workspace-btn" class="btn btn-icon btn-primary" title="Create Workspace">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                        <button id="rename-workspace-btn" class="btn btn-icon btn-warning" title="Rename Current Workspace">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button id="delete-workspace-btn" class="btn btn-icon btn-danger" title="Delete Current Workspace">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Live Header Metrics Status Bar -->
+                <div class="header-stats" id="header-system-stats">
+                    <div class="header-stat-badge" title="Active Assets">
+                        <i class="fa-solid fa-cubes text-primary"></i>
+                        <span class="stat-num" id="stat-active">0</span>
+                        <span class="stat-lbl">Active</span>
+                    </div>
+                    <div class="header-stat-badge" title="Returned Assets">
+                        <i class="fa-solid fa-clipboard-check text-success"></i>
+                        <span class="stat-num" id="stat-returned">0</span>
+                        <span class="stat-lbl">Returned</span>
+                    </div>
+                    <div class="header-stat-badge clickable-badge" id="metric-card-lowstock" title="Low Stock items">
+                        <i class="fa-solid fa-triangle-exclamation text-warning"></i>
+                        <span class="stat-num" id="stat-low">0</span>
+                        <span class="stat-lbl">Low Stock</span>
+                    </div>
+                    <div class="header-stat-badge clickable-badge" id="metric-card-overdue" title="Overdue Temporary Loans">
+                        <i class="fa-solid fa-hourglass-end text-danger"></i>
+                        <span class="stat-num" id="stat-overdue">0</span>
+                        <span class="stat-lbl">Overdue</span>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <!-- Alerts dropdown -->
+                    <div class="notification-container">
+                        <button id="notification-bell" class="notification-btn">
+                            <i class="fa-regular fa-bell"></i>
+                            <span id="notification-badge" class="badge" style="display: none;">0</span>
+                        </button>
+                        <div id="notification-dropdown" class="notification-dropdown">
+                            <div class="dropdown-header">
+                                <h4>Notifications & Alerts</h4>
+                                <button id="clear-notifications" class="text-btn">Reset alerts</button>
+                            </div>
+                            <div id="notification-list" class="notification-list">
+                                <p class="empty-state">No active alerts.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- ================= DYNAMIC VIEWS ================= -->
+            
+            <!-- VIEW: INVENTORY -->
+            <section id="view-inventory" class="content-view active">
+
+                <!-- METRIC CARDS REMOVED (Relocated to Header Bar) -->
+
+                <!-- DUAL SPLIT ROW: OPERATIONS AND FORMS -->
+                <div class="operations-grid" id="operations-forms-grid" style="display: none;">
+                    
+                    <!-- CARD A: PRODUCT MANAGEMENT -->
+                    <div class="card operation-card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-boxes-packing"></i> Product Management</h3>
+                        </div>
+                        <div class="card-body">
+                            <!-- ADD STOCK SUB-FORM -->
+                            <form id="add-product-form" class="compact-form">
+                                <div class="form-group">
+                                    <label for="add-p-name">Product Name</label>
+                                    <div class="input-wrapper">
+                                        <input type="text" id="add-p-name" placeholder="e.g. Laptop" required>
+                                        <i class="fa-solid fa-laptop input-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group flex-2">
+                                        <label for="add-p-model">Model</label>
+                                        <div class="input-wrapper">
+                                            <input type="text" id="add-p-model" placeholder="e.g. T480" required>
+                                            <i class="fa-solid fa-circle-info input-icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label for="add-p-qty">Quantity</label>
+                                        <div class="input-wrapper">
+                                            <input type="number" id="add-p-qty" min="1" placeholder="e.g. 5" required>
+                                            <i class="fa-solid fa-hashtag input-icon"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-plus"></i> Add New Product Stock</button>
+                            </form>
+                            
+                            <hr class="card-separator">
+                            
+                            <!-- MANAGE STOCK ACTIONS -->
+                            <div class="manage-product-section">
+                                <div class="form-group">
+                                    <label for="manage-product-select">Select Registered Product</label>
+                                    <div class="input-wrapper">
+                                        <select id="manage-product-select">
+                                            <option value="">-- Choose product --</option>
+                                        </select>
+                                        <i class="fa-solid fa-boxes-stacked input-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="btn-group">
+                                    <button type="button" id="edit-product-btn" class="btn btn-outline btn-sm"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                                    <button type="button" id="transfer-product-btn" class="btn btn-outline btn-sm"><i class="fa-solid fa-right-left"></i> Transfer</button>
+                                    <button type="button" id="delete-product-btn" class="btn btn-danger btn-sm"><i class="fa-regular fa-trash-can"></i> Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- CARD B: ISSUE ASSET -->
+                    <div class="card operation-card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-circle-arrow-up"></i> Issue New Asset</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="issue-asset-form">
+                                <div class="form-group">
+                                    <label for="issue-product-select">Product Category</label>
+                                    <div class="input-wrapper">
+                                        <select id="issue-product-select" required>
+                                            <option value="">-- Choose product --</option>
+                                        </select>
+                                        <i class="fa-solid fa-box input-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="issue-serial">Asset Serial No</label>
+                                    <div class="input-wrapper">
+                                        <input type="text" id="issue-serial" placeholder="Enter unique serial" required>
+                                        <i class="fa-solid fa-barcode input-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="issue-recipient">Recipient Employee Name</label>
+                                    <div class="input-wrapper">
+                                        <input type="text" id="issue-recipient" placeholder="Employee full name" required>
+                                        <i class="fa-solid fa-user input-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group flex-1">
+                                        <label for="issue-recipient-id">Emp ID</label>
+                                        <div class="input-wrapper">
+                                            <input type="text" id="issue-recipient-id" placeholder="ID" required>
+                                            <i class="fa-solid fa-id-card input-icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="form-group flex-2">
+                                        <label for="issue-department-select">Department</label>
+                                        <div class="input-wrapper">
+                                            <select id="issue-department-select" required>
+                                                <option value="">-- Choose Dept --</option>
+                                                <option value="sales">sales</option>
+                                                <option value="it">it</option>
+                                                <option value="hr">hr</option>
+                                                <option value="accounts">accounts</option>
+                                                <option value="technical">technical</option>
+                                                <option value="ohc">ohc</option>
+                                                <option value="Other">Other (Specify)</option>
+                                            </select>
+                                            <i class="fa-solid fa-building input-icon"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row" id="issue-department-manual-row" style="display: none;">
+                                    <div class="form-group flex-1">
+                                        <label for="issue-department-manual">Specify Department</label>
+                                        <div class="input-wrapper">
+                                            <input type="text" id="issue-department-manual" placeholder="Enter department name">
+                                            <i class="fa-solid fa-pen input-icon"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group flex-1">
+                                        <label for="issue-type">Loan Type</label>
+                                        <div class="input-wrapper">
+                                            <select id="issue-type">
+                                                <option value="Permanent">Permanent</option>
+                                                <option value="Temporary">Temporary</option>
+                                            </select>
+                                            <i class="fa-solid fa-business-time input-icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label for="issue-start-date">Date Issued</label>
+                                        <div class="input-wrapper">
+                                            <input type="date" id="issue-start-date" required>
+                                            <i class="fa-solid fa-calendar-days input-icon"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group" id="issue-return-date-container" style="display: none;">
+                                    <label for="issue-end-date">Due Return Date</label>
+                                    <div class="input-wrapper">
+                                        <input type="date" id="issue-end-date">
+                                        <i class="fa-solid fa-calendar-check input-icon"></i>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-circle-arrow-up"></i> Allocate Asset</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- CARD C: RETURN ASSET -->
+                    <div class="card operation-card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-circle-arrow-down"></i> Record Asset Return</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="return-asset-form">
+                                <div class="form-group">
+                                    <label for="return-search-key">Search Serial / Emp ID</label>
+                                    <div class="input-wrapper">
+                                        <input type="text" id="return-search-key" placeholder="Enter serial key or Emp ID">
+                                        <i class="fa-solid fa-magnifying-glass input-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="checkbox-container">
+                                        <input type="checkbox" id="return-manual-mode-chk">
+                                        <label for="return-manual-mode-chk">Manual Return (Asset not in database)</label>
+                                    </div>
+                                </div>
+                                <div class="form-group" id="return-select-container">
+                                    <label for="return-asset-select">Select Active Loan</label>
+                                    <div class="input-wrapper">
+                                        <select id="return-asset-select">
+                                            <option value="">-- Choose active asset --</option>
+                                        </select>
+                                        <i class="fa-solid fa-list-check input-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group flex-1">
+                                        <label for="return-emp-name">Employee Name</label>
+                                        <div class="input-wrapper">
+                                            <input type="text" id="return-emp-name" readonly placeholder="Name">
+                                            <i class="fa-solid fa-user input-icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label for="return-dept-name">Department</label>
+                                        <div class="input-wrapper">
+                                            <input type="text" id="return-dept-name" readonly placeholder="Department">
+                                            <i class="fa-solid fa-building input-icon"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group flex-1">
+                                        <label for="return-date">Return Date</label>
+                                        <div class="input-wrapper">
+                                            <input type="date" id="return-date" required>
+                                            <i class="fa-solid fa-calendar-check input-icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="form-group flex-2">
+                                        <label for="return-remark">Remarks</label>
+                                        <div class="input-wrapper">
+                                            <input type="text" id="return-remark" placeholder="Return condition, notes, etc.">
+                                            <i class="fa-solid fa-comment-dots input-icon"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="checkbox-container danger-checkbox">
+                                        <input type="checkbox" id="return-ewaste-chk">
+                                        <label for="return-ewaste-chk" class="text-danger">Damaged → Dispose to E-Waste Vault</label>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-circle-arrow-down"></i> Process Return</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                </div>
+
+                <!-- TABLE SECTION -->
+                <div class="card table-card" id="inventory-table-card">
+                    <div class="table-header-controls">
+                        <div class="controls-left">
+                            <select id="table-filter-select" class="form-control">
+                                <option value="Newest First">Newest First</option>
+                                <option value="Oldest First">Oldest First</option>
+                                <option value="Only Active">Only Active</option>
+                                <option value="Only Returned">Only Returned</option>
+                            </select>
+                            <input type="text" id="table-search-input" placeholder="Search serial, emp, dept...">
+                            <button id="table-search-btn" class="btn btn-warning">SEARCH</button>
+                        </div>
+                        <div class="controls-right">
+                            <button id="toggle-forms-btn" class="btn btn-outline" style="margin-right: 8px;"><i class="fa-solid fa-chevron-up"></i> Hide Forms</button>
+                            <button id="table-import-btn" class="btn btn-success" title="Import📥" style="margin-right: 8px;"><i class="fa-solid fa-file-import"></i> IMPORT EXCEL</button>
+                            <button id="table-export-btn" class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> EXPORT EXCEL</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="inventory-table">
+                            <thead>
+                                <tr>
+                                    <th>Serial</th>
+                                    <th>Product</th>
+                                    <th>Model</th>
+                                    <th>User</th>
+                                    <th>Emp ID</th>
+                                    <th>Dept</th>
+                                    <th>Type</th>
+                                    <th>Issued</th>
+                                    <th>Return/Due</th>
+                                    <th>Status</th>
+                                    <th>Remark</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-table-body">
+                                <tr>
+                                    <td colspan="12" class="text-center">Loading assets logs...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-pagination">
+                        <span id="pagination-label">Page 1 / 1</span>
+                        <div class="pagination-buttons">
+                            <button id="pagination-prev" class="btn btn-outline btn-sm"><i class="fa-solid fa-chevron-left"></i> Prev</button>
+                            <button id="pagination-next" class="btn btn-outline btn-sm">Next <i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- VIEW: E-WASTE LOGS -->
+            <section id="view-ewaste" class="content-view">
+                <div class="card table-card">
+                    <div class="table-header-controls">
+                        <h3 class="view-sub-title">E-Waste Vault</h3>
+                        <button id="ewaste-export-btn" class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> Export E-Waste List</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Model</th>
+                                    <th>Serial</th>
+                                    <th>Disposal Date</th>
+                                    <th>Reason / Remark</th>
+                                    <th>Source Workspace</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ewaste-table-body">
+                                <tr>
+                                    <td colspan="7" class="text-center">No E-Waste records disposed yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: RETURNS HISTORY -->
+            <section id="view-returns" class="content-view">
+                <div class="card table-card">
+                    <div class="table-header-controls">
+                        <h3 class="view-sub-title">Returns Ledger</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Serial</th>
+                                    <th>Product</th>
+                                    <th>Model</th>
+                                    <th>Employee</th>
+                                    <th>Department</th>
+                                    <th>Return Date</th>
+                                    <th>Type</th>
+                                </tr>
+                            </thead>
+                            <tbody id="returns-table-body">
+                                <tr>
+                                    <td colspan="7" class="text-center">No returns recorded.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: REPORTS -->
+            <section id="view-reports" class="content-view">
+                <!-- Analytics Top Row -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon primary-light"><i class="fa-solid fa-boxes-stacked"></i></div>
+                        <div class="metric-data">
+                            <span class="metric-value" id="report-stat-total">0</span>
+                            <span class="metric-label">Total Assets Transacted</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon warning-light"><i class="fa-solid fa-hourglass-half"></i></div>
+                        <div class="metric-data">
+                            <span class="metric-value" id="report-stat-active">0</span>
+                            <span class="metric-label">Active Loans</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon success-light"><i class="fa-solid fa-circle-check"></i></div>
+                        <div class="metric-data">
+                            <span class="metric-value" id="report-stat-returned">0</span>
+                            <span class="metric-label">Completed Returns</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Used Products Chart -->
+                <div class="card table-card table-margin-top">
+                    <div class="table-header-controls">
+                        <h3 class="view-sub-title"><i class="fa-solid fa-chart-bar"></i> Top 10 Most Issued Asset Categories</h3>
+                    </div>
+                    <div class="chart-container" style="position: relative; height: 350px; width: 100%; margin-top: 15px;">
+                        <canvas id="reports-chart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: SECURITY SETTINGS -->
+            <section id="view-security" class="content-view">
+                <div class="card form-card-centered">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-lock"></i> Change Profile Password</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="change-password-form">
+                            <div class="form-group">
+                                <label for="old-password">Current Password</label>
+                                <input type="password" id="old-password" required placeholder="Enter current password">
+                            </div>
+                            <div class="form-group">
+                                <label for="new-password">New Password</label>
+                                <input type="password" id="new-password" required placeholder="Enter new password">
+                            </div>
+                            <div class="form-group">
+                                <label for="confirm-password">Confirm Password</label>
+                                <input type="password" id="confirm-password" required placeholder="Confirm new password">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">Update Profile Password</button>
+                            <div id="change-password-status" class="status-msg"></div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ========================================== -->
+    <!--                  MODALS                    -->
+    <!-- ========================================== -->
+
+    <!-- MODAL: ADD WORKSPACE -->
+    <div id="add-workspace-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Workspace</h3>
+                <span class="close-btn" data-modal="add-workspace-modal">&times;</span>
+            </div>
+            <form id="add-workspace-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="workspace-name-input">Workspace Name</label>
+                        <input type="text" id="workspace-name-input" placeholder="e.g. Sales Department" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" data-modal="add-workspace-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Workspace</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: RENAME WORKSPACE -->
+    <div id="rename-workspace-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Rename Current Workspace</h3>
+                <span class="close-btn" data-modal="rename-workspace-modal">&times;</span>
+            </div>
+            <form id="rename-workspace-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="rename-workspace-name-input">New Workspace Name</label>
+                        <input type="text" id="rename-workspace-name-input" placeholder="Enter new name" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" data-modal="rename-workspace-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Rename Workspace</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: EDIT PRODUCT -->
+    <div id="edit-product-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Product Stock Details</h3>
+                <span class="close-btn" data-modal="edit-product-modal">&times;</span>
+            </div>
+            <form id="edit-product-form">
+                <div class="modal-body">
+                    <input type="hidden" id="edit-p-id">
+                    <div class="form-group">
+                        <label for="edit-p-name-input">Product Name</label>
+                        <input type="text" id="edit-p-name-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-p-model-input">Model</label>
+                        <input type="text" id="edit-p-model-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-p-qty-input">Quantity</label>
+                        <input type="number" id="edit-p-qty-input" min="0" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" data-modal="edit-product-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: TRANSFER PRODUCT -->
+    <div id="transfer-product-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Transfer Product to Workspace</h3>
+                <span class="close-btn" data-modal="transfer-product-modal">&times;</span>
+            </div>
+            <form id="transfer-product-form">
+                <div class="modal-body">
+                    <input type="hidden" id="transfer-p-id">
+                    <p class="warning-text">Transfer will move the entire product inventory metadata to the selected workspace.</p>
+                    <div class="form-group">
+                        <label for="transfer-workspace-select">Target Workspace</label>
+                        <select id="transfer-workspace-select" required>
+                            <option value="">-- Select Target --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" data-modal="transfer-product-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Transfer stock</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: MANUAL RETURN -->
+    <div id="manual-return-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Manual Return (Asset not in database)</h3>
+                <span class="close-btn" data-modal="manual-return-modal">&times;</span>
+            </div>
+            <form id="manual-return-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="manual-return-product-select">Product Type</label>
+                        <div class="input-wrapper">
+                            <select id="manual-return-product-select" required>
+                                <option value="">-- Choose product --</option>
+                            </select>
+                            <i class="fa-solid fa-box input-icon"></i>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="manual-return-serial">Serial No</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="manual-return-serial" required placeholder="Serial key">
+                            <i class="fa-solid fa-key input-icon"></i>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="manual-return-emp">Employee Name</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="manual-return-emp" required placeholder="Name">
+                            <i class="fa-solid fa-user input-icon"></i>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="manual-return-dept">Department</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="manual-return-dept" required placeholder="Dept">
+                            <i class="fa-solid fa-building-user input-icon"></i>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-container danger-checkbox">
+                            <input type="checkbox" id="manual-return-ewaste">
+                            <label for="manual-return-ewaste" class="text-danger">Dispose straight to E-Waste</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" data-modal="manual-return-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Record Manual Return</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ASSET HISTORY -->
+    <div id="history-modal" class="modal">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3 id="history-modal-title">Asset History</h3>
+                <span class="close-btn" data-modal="history-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Action</th>
+                                <th>User</th>
+                                <th>Department</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body">
+                            <tr>
+                                <td colspan="5" class="text-center">No action logs recorded.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" data-modal="history-modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: OVERDUE VIEW -->
+    <div id="overdue-modal" class="modal">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3>Overdue Temporary Asset Loans</h3>
+                <span class="close-btn" data-modal="overdue-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Serial</th>
+                                <th>Product</th>
+                                <th>Model</th>
+                                <th>User</th>
+                                <th>Emp ID</th>
+                                <th>Department</th>
+                                <th>Issued</th>
+                                <th>Due Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="overdue-table-body">
+                            <tr>
+                                <td colspan="8" class="text-center">No overdue temporary loans!</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" data-modal="overdue-modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: IMPORT EXCEL -->
+    <div id="import-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Import Assets from Excel Sheet</h3>
+                <span class="close-btn" data-modal="import-modal">&times;</span>
+            </div>
+            <form id="import-excel-form">
+                <div class="modal-body">
+                    <p class="warning-text">Make sure the Excel sheet headers match exactly: <b>Product, Model, Serial, User, Emp ID, Dept, Type, Issue Date, Return Date</b>.</p>
+                    <div class="form-group">
+                        <label for="excel-file-input">Select Excel File (.xlsx)</label>
+                        <input type="file" id="excel-file-input" accept=".xlsx" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" data-modal="import-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Import Assets</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!--               TOAST SYSTEM                 -->
+    <!-- ========================================== -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- App Logic -->
+    <script src="{{ url_for('static', filename='js/app.js') }}?v=2.0.1"></script>
+</body>
+</html>
