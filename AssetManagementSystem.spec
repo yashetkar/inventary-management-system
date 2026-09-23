@@ -1,12 +1,11 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-
 a = Analysis(
     ['inventary.py'],
     pathex=[],
     binaries=[],
     datas=[('templates', 'templates'), ('static', 'static'), ('background.jpg', '.'), ('logo.png', '.')],
-    hiddenimports=['openpyxl', 'pandas', 'jinja2', 'flask', 'webview'],
+    hiddenimports=['openpyxl', 'pandas', 'jinja2', 'flask', 'webview', 'sqlalchemy', 'pymysql', 'dotenv', 'clr_loader', 'pythonnet'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -35,4 +34,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon='app_icon.ico',
 )

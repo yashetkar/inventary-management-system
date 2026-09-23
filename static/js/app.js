@@ -8,6 +8,10 @@ const state = {
     activeWorkspaceId: null,
     currentPage: 0,
     totalPages: 1,
+    ewasteCurrentPage: 0,
+    ewasteTotalPages: 1,
+    returnsCurrentPage: 0,
+    returnsTotalPages: 1,
     workspaces: [],
     products: [],
     alerts: {
@@ -71,6 +75,7 @@ const DOM = {
     addPName: document.getElementById('add-p-name'),
     addPModel: document.getElementById('add-p-model'),
     addPQty: document.getElementById('add-p-qty'),
+    addPMinStock: document.getElementById('add-p-min-stock'),
     manageProductSelect: document.getElementById('manage-product-select'),
     editProductBtn: document.getElementById('edit-product-btn'),
     transferProductBtn: document.getElementById('transfer-product-btn'),
@@ -86,14 +91,16 @@ const DOM = {
     issueDepartmentManualRow: document.getElementById('issue-department-manual-row'),
     issueType: document.getElementById('issue-type'),
     issueSerial: document.getElementById('issue-serial'),
+    customSerialContainer: document.getElementById('custom-serial-container'),
+    customSerialInput: document.getElementById('custom-serial-input'),
     issueStartDate: document.getElementById('issue-start-date'),
     issueEndDate: document.getElementById('issue-end-date'),
     issueEndDateContainer: document.getElementById('issue-return-date-container'),
+    issueSpecification: document.getElementById('issue-specification'),
     
     // RETURN ASSET
     returnAssetForm: document.getElementById('return-asset-form'),
     returnSearchKey: document.getElementById('return-search-key'),
-    returnManualModeChk: document.getElementById('return-manual-mode-chk'),
     returnSelectContainer: document.getElementById('return-select-container'),
     returnAssetSelect: document.getElementById('return-asset-select'),
     returnEmpName: document.getElementById('return-emp-name'),
@@ -101,7 +108,6 @@ const DOM = {
     returnDate: document.getElementById('return-date'),
     returnEwasteChk: document.getElementById('return-ewaste-chk'),
     returnRemark: document.getElementById('return-remark'),
-    manualReturnModalBtn: document.getElementById('manual-return-modal-btn'),
     
     // TABLE
     operationsFormsGrid: document.getElementById('operations-forms-grid'),
@@ -118,7 +124,13 @@ const DOM = {
     // E-WASTE & RETURNS
     ewasteTableBody: document.getElementById('ewaste-table-body'),
     ewasteExportBtn: document.getElementById('ewaste-export-btn'),
+    ewastePaginationLabel: document.getElementById('ewaste-pagination-label'),
+    ewastePaginationPrev: document.getElementById('ewaste-pagination-prev'),
+    ewastePaginationNext: document.getElementById('ewaste-pagination-next'),
     returnsTableBody: document.getElementById('returns-table-body'),
+    returnsPaginationLabel: document.getElementById('returns-pagination-label'),
+    returnsPaginationPrev: document.getElementById('returns-pagination-prev'),
+    returnsPaginationNext: document.getElementById('returns-pagination-next'),
     
     // REPORTS
     reportStatTotal: document.getElementById('report-stat-total'),
@@ -148,20 +160,39 @@ const DOM = {
     editPNameInput: document.getElementById('edit-p-name-input'),
     editPModelInput: document.getElementById('edit-p-model-input'),
     editPQtyInput: document.getElementById('edit-p-qty-input'),
+    editPMinStockInput: document.getElementById('edit-p-min-stock-input'),
     
     transferProductModal: document.getElementById('transfer-product-modal'),
     transferProductForm: document.getElementById('transfer-product-form'),
     transferPId: document.getElementById('transfer-p-id'),
     transferWorkspaceSelect: document.getElementById('transfer-workspace-select'),
-    
-    manualReturnModal: document.getElementById('manual-return-modal'),
-    manualReturnForm: document.getElementById('manual-return-form'),
-    manualReturnProductSelect: document.getElementById('manual-return-product-select'),
-    manualReturnSerial: document.getElementById('manual-return-serial'),
-    manualReturnEmp: document.getElementById('manual-return-emp'),
-    manualReturnDept: document.getElementById('manual-return-dept'),
-    manualReturnEwaste: document.getElementById('manual-return-ewaste'),
-    
+
+    shiftAssetModal: document.getElementById('shift-asset-modal'),
+    shiftAssetForm: document.getElementById('shift-asset-form'),
+    shiftIssueId: document.getElementById('shift-issue-id'),
+    shiftAssetSerialLabel: document.getElementById('shift-asset-serial-label'),
+    shiftAssetCurrentInfo: document.getElementById('shift-asset-current-info'),
+    shiftRecipient: document.getElementById('shift-recipient'),
+    shiftRecipientId: document.getElementById('shift-recipient-id'),
+    shiftDepartmentSelect: document.getElementById('shift-department-select'),
+    shiftDepartmentManual: document.getElementById('shift-department-manual'),
+    shiftDepartmentManualRow: document.getElementById('shift-department-manual-row'),
+    shiftDate: document.getElementById('shift-date'),
+    shiftRemark: document.getElementById('shift-remark'),
+
+    cardShiftSearchKey: document.getElementById('card-shift-search-key'),
+    cardShiftAssetSelect: document.getElementById('card-shift-asset-select'),
+    cardShiftCurrentEmp: document.getElementById('card-shift-current-emp'),
+    cardShiftCurrentDept: document.getElementById('card-shift-current-dept'),
+    cardShiftNewEmp: document.getElementById('card-shift-new-emp'),
+    cardShiftNewEmpId: document.getElementById('card-shift-new-empid'),
+    cardShiftNewDeptSelect: document.getElementById('card-shift-new-dept-select'),
+    cardShiftNewDeptManual: document.getElementById('card-shift-new-dept-manual'),
+    cardShiftNewDeptManualRow: document.getElementById('card-shift-new-dept-manual-row'),
+    cardShiftDate: document.getElementById('card-shift-date'),
+    cardShiftRemark: document.getElementById('card-shift-remark'),
+    cardShiftAssetForm: document.getElementById('card-shift-asset-form'),
+
     historyModal: document.getElementById('history-modal'),
     historyModalTitle: document.getElementById('history-modal-title'),
     historyTableBody: document.getElementById('history-table-body'),
@@ -172,6 +203,11 @@ const DOM = {
     importModal: document.getElementById('import-modal'),
     importExcelForm: document.getElementById('import-excel-form'),
     excelFileInput: document.getElementById('excel-file-input'),
+    
+    tableClearBtn: document.getElementById('table-clear-btn'),
+    clearDataModal: document.getElementById('clear-data-modal'),
+    clearDataTypeSelect: document.getElementById('clear-data-type-select'),
+    confirmClearDataBtn: document.getElementById('confirm-clear-data-btn'),
     
     toastContainer: document.getElementById('toast-container')
 };
@@ -279,6 +315,46 @@ function closeModal(modal) {
     modal.classList.remove('active');
 }
 
+/**
+ * Elegant custom confirmation modal replacing native window.confirm()
+ * Returns a Promise that resolves to true (Confirm) or false (Cancel)
+ */
+function customConfirm(message) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('confirm-modal');
+        const msgEl = document.getElementById('confirm-modal-message');
+        const okBtn = document.getElementById('confirm-ok-btn');
+        const cancelBtn = document.getElementById('confirm-cancel-btn');
+        const closeBtn = document.getElementById('confirm-close-btn');
+
+        msgEl.textContent = message;
+        openModal(modal);
+
+        const cleanUp = () => {
+            closeModal(modal);
+            okBtn.removeEventListener('click', onOk);
+            cancelBtn.removeEventListener('click', onCancel);
+            closeBtn.removeEventListener('click', onCancel);
+        };
+
+        const onOk = () => {
+            cleanUp();
+            resolve(true);
+        };
+
+        const onCancel = () => {
+            cleanUp();
+            resolve(false);
+        };
+
+        // Use { once: true } or clean up manually to avoid double-binding
+        okBtn.addEventListener('click', onOk);
+        cancelBtn.addEventListener('click', onCancel);
+        closeBtn.addEventListener('click', onCancel);
+    });
+}
+
+
 // Global modal triggers close on clicking 'X' or Cancel
 document.querySelectorAll('[data-modal]').forEach(trigger => {
     trigger.addEventListener('click', (e) => {
@@ -345,8 +421,8 @@ DOM.loginForm.addEventListener('submit', async (e) => {
     }
 });
 
-DOM.logoutBtn.addEventListener('click', () => {
-    if (confirm('Are you sure you want to exit?')) {
+DOM.logoutBtn.addEventListener('click', async () => {
+    if (await customConfirm('Are you sure you want to exit?')) {
         state.user = null;
         localStorage.removeItem('user');
         state.workspaces = [];
@@ -434,12 +510,15 @@ function switchView(view) {
     let title = 'Inventory Overview';
     if (view === 'inventory') {
         title = 'Inventory Overview';
+        state.currentPage = 0;
         loadWorkspaceInventory();
     } else if (view === 'ewaste') {
         title = 'E-Waste Logs';
+        state.ewasteCurrentPage = 0;
         loadEWasteLogs();
     } else if (view === 'returns') {
         title = 'Returns History';
+        state.returnsCurrentPage = 0;
         loadReturnsHistory();
     } else if (view === 'reports') {
         title = 'Analytical Reports';
@@ -522,7 +601,7 @@ DOM.addWorkspaceForm.addEventListener('submit', async (e) => {
             DOM.workspaceSelect.value = state.activeWorkspaceId;
             loadWorkspaceInventory();
         } else {
-            alert(data.error || 'Failed to create workspace');
+            showToast(data.error || 'Failed to create workspace', 'danger');
         }
     } catch (err) {
         showToast('Error saving workspace', 'danger');
@@ -564,7 +643,7 @@ if (DOM.renameWorkspaceForm) {
                 DOM.workspaceSelect.value = state.activeWorkspaceId;
                 loadWorkspaceInventory();
             } else {
-                alert(data.error || 'Failed to rename workspace');
+                showToast(data.error || 'Failed to rename workspace', 'danger');
             }
         } catch (err) {
             showToast('Error renaming workspace', 'danger');
@@ -581,7 +660,7 @@ DOM.deleteWorkspaceBtn.addEventListener('click', async () => {
         return;
     }
     
-    if (confirm(`Delete workspace "${ws.name}"? This deletes all stock and non-active transactions.`)) {
+    if (await customConfirm(`Delete workspace "${ws.name}"? This deletes all stock and non-active transactions.`)) {
         try {
             const res = await fetch(`/api/workspaces/${state.activeWorkspaceId}`, { method: 'DELETE' });
             const data = await res.json();
@@ -592,7 +671,7 @@ DOM.deleteWorkspaceBtn.addEventListener('click', async () => {
                 await loadWorkspaces();
                 loadWorkspaceInventory();
             } else {
-                alert(data.error || 'Deletion blocked');
+                showToast(data.error || 'Deletion blocked', 'danger');
             }
         } catch (err) {
             showToast('Connection error during deletion', 'danger');
@@ -611,38 +690,43 @@ async function loadProducts() {
         const data = await res.json();
         state.products = data;
         
+        let lowStockCount = 0;
+        
         // Rebuild manage products selector
         if (DOM.manageProductSelect) {
-        DOM.manageProductSelect.innerHTML = '<option value="">-- Choose product stock --</option>';
-        state.products.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.id;
-            opt.textContent = `${p.name} (${p.model}) | Qty: ${p.quantity}`;
-            DOM.manageProductSelect.appendChild(opt);
-        });
+            DOM.manageProductSelect.innerHTML = '<option value="">-- Choose product stock --</option>';
+            state.products.forEach(p => {
+                const threshold = p.min_stock_alert !== undefined ? p.min_stock_alert : 5;
+                const isLow = p.quantity <= threshold;
+                if (isLow) lowStockCount++;
+                const badge = isLow ? ` ⚠️ (Low Stock <= ${threshold})` : ` (Min: ${threshold})`;
+                
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = `${p.name} (${p.model}) | Qty: ${p.quantity}${badge}`;
+                DOM.manageProductSelect.appendChild(opt);
+            });
         }
 
         // Rebuild issue forms product selector
         if (DOM.issueProductSelect) {
-        DOM.issueProductSelect.innerHTML = '<option value="">-- Choose product stock --</option>';
-        state.products.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.id;
-            opt.textContent = `${p.name} (${p.model}) | Qty: ${p.quantity}`;
-            DOM.issueProductSelect.appendChild(opt);
-        });
+            DOM.issueProductSelect.innerHTML = '<option value="">-- Choose product stock --</option>';
+            state.products.forEach(p => {
+                const threshold = p.min_stock_alert !== undefined ? p.min_stock_alert : 5;
+                const isLow = p.quantity <= threshold;
+                const badge = isLow ? ` ⚠️ (Low Stock <= ${threshold})` : '';
+                
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = `${p.name} (${p.model}) | Qty: ${p.quantity}${badge}`;
+                DOM.issueProductSelect.appendChild(opt);
+            });
         }
-        
-        // Rebuild manual return products
-        if (DOM.manualReturnProductSelect) {
-        DOM.manualReturnProductSelect.innerHTML = '<option value="">-- Choose product --</option>';
-        state.products.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.id;
-            opt.textContent = `${p.name} (${p.model})`;
-            DOM.manualReturnProductSelect.appendChild(opt);
-        });
+
+        if (DOM.statLow) {
+            animateCounter(DOM.statLow, lowStockCount);
         }
+
     } catch (err) {
         showToast('Error syncing workspace stock list', 'danger');
     }
@@ -655,21 +739,23 @@ DOM.addProductForm.addEventListener('submit', async (e) => {
     const name = DOM.addPName.value;
     const model = DOM.addPModel.value;
     const quantity = parseInt(DOM.addPQty.value);
+    const min_stock_alert = parseInt(DOM.addPMinStock ? DOM.addPMinStock.value : 5) || 5;
     
     try {
         const res = await fetch('/api/products', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, model, quantity, workspace_id: state.activeWorkspaceId })
+            body: JSON.stringify({ name, model, quantity, min_stock_alert, workspace_id: state.activeWorkspaceId })
         });
         const data = await res.json();
         
         if (res.ok && data.success) {
             showToast('Stock registered', 'success');
             DOM.addProductForm.reset();
+            if (DOM.addPMinStock) DOM.addPMinStock.value = 5;
             loadWorkspaceInventory();
         } else {
-            alert(data.error || 'Failed to add stock');
+            showToast(data.error || 'Failed to add stock', 'danger');
         }
     } catch (err) {
         showToast('Server update error', 'danger');
@@ -691,6 +777,7 @@ DOM.editProductBtn.addEventListener('click', () => {
         DOM.editPNameInput.value = p.name;
         DOM.editPModelInput.value = p.model;
         DOM.editPQtyInput.value = p.quantity;
+        if (DOM.editPMinStockInput) DOM.editPMinStockInput.value = p.min_stock_alert || 5;
         openModal(DOM.editProductModal);
     }
 });
@@ -702,12 +789,13 @@ DOM.editProductForm.addEventListener('submit', async (e) => {
     const name = DOM.editPNameInput.value;
     const model = DOM.editPModelInput.value;
     const quantity = parseInt(DOM.editPQtyInput.value);
+    const min_stock_alert = parseInt(DOM.editPMinStockInput ? DOM.editPMinStockInput.value : 5) || 5;
     
     try {
         const res = await fetch('/api/products/edit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, name, model, quantity })
+            body: JSON.stringify({ id, name, model, quantity, min_stock_alert })
         });
         const data = await res.json();
         
@@ -716,7 +804,7 @@ DOM.editProductForm.addEventListener('submit', async (e) => {
             closeModal(DOM.editProductModal);
             loadWorkspaceInventory();
         } else {
-            alert(data.error || 'Update failed');
+            showToast(data.error || 'Update failed', 'danger');
         }
     } catch (err) {
         showToast('Connection error', 'danger');
@@ -760,7 +848,7 @@ DOM.transferProductForm.addEventListener('submit', async (e) => {
             closeModal(DOM.transferProductModal);
             loadWorkspaceInventory();
         } else {
-            alert(data.error || 'Transfer failed');
+            showToast(data.error || 'Transfer failed', 'danger');
         }
     } catch (err) {
         showToast('Connection error', 'danger');
@@ -776,7 +864,7 @@ DOM.deleteProductBtn.addEventListener('click', async () => {
         return;
     }
     const p = state.products.find(item => item.id === parseInt(pid));
-    if (confirm(`Delete product "${p.name} (${p.model})"?\nThis cannot be undone and will delete past history if no assets are active.`)) {
+    if (await customConfirm(`Delete product "${p.name} (${p.model})"?\nThis cannot be undone and will delete past history if no assets are active.`)) {
         try {
             const res = await fetch(`/api/products/delete?id=${pid}`, { method: 'DELETE' });
             const data = await res.json();
@@ -785,7 +873,7 @@ DOM.deleteProductBtn.addEventListener('click', async () => {
                 showToast('Product deleted successfully', 'success');
                 loadWorkspaceInventory();
             } else {
-                alert(data.error || 'Delete failed');
+                showToast(data.error || 'Delete failed', 'danger');
             }
         } catch (err) {
             showToast('Connection error during deletion', 'danger');
@@ -830,6 +918,16 @@ DOM.issueAssetForm.addEventListener('submit', async (e) => {
     const selectedDept = DOM.issueDepartmentSelect.value;
     const finalDept = selectedDept === 'Other' ? DOM.issueDepartmentManual.value.trim() : selectedDept;
     
+    const serialVal = DOM.issueSerial ? DOM.issueSerial.value : '';
+    const finalSerial = serialVal === '__custom__'
+        ? (DOM.customSerialInput ? DOM.customSerialInput.value.trim() : '')
+        : serialVal;
+
+    if (!finalSerial) {
+        showToast('Please select or type a serial number', 'warning');
+        return;
+    }
+    
     const payload = {
         product_id: parseInt(DOM.issueProductSelect.value),
         recipient: DOM.issueRecipient.value,
@@ -838,7 +936,8 @@ DOM.issueAssetForm.addEventListener('submit', async (e) => {
         type: DOM.issueType.value,
         start_date: DOM.issueStartDate.value,
         end_date: DOM.issueEndDate.value,
-        serial_no: DOM.issueSerial.value,
+        serial_no: finalSerial,
+        specification: DOM.issueSpecification ? DOM.issueSpecification.value.trim() : '',
         workspace_id: state.activeWorkspaceId
     };
     
@@ -853,14 +952,18 @@ DOM.issueAssetForm.addEventListener('submit', async (e) => {
         if (res.ok && data.success) {
             showToast('Asset issued successfully', 'success');
             DOM.issueAssetForm.reset();
+            if (DOM.customSerialContainer) DOM.customSerialContainer.style.display = 'none';
             DOM.issueEndDateContainer.style.display = 'none';
             if (DOM.issueDepartmentManualRow) {
                 DOM.issueDepartmentManualRow.style.display = 'none';
                 DOM.issueDepartmentManual.removeAttribute('required');
             }
-            loadWorkspaceInventory();
+            await loadWorkspaceInventory();
+            if (state.importedQueue && state.importedQueue.length > 0) {
+                populateNextImportedRecord();
+            }
         } else {
-            alert(data.error || 'Asset issue failed');
+            showToast(data.error || 'Asset issue failed', 'danger');
         }
     } catch (err) {
         showToast('Connection error', 'danger');
@@ -868,28 +971,149 @@ DOM.issueAssetForm.addEventListener('submit', async (e) => {
 });
 }
 
+async function loadAllWorkspaceSerials(productIdFilter = null) {
+    if (!state.activeWorkspaceId) return;
+    const serialSelect = DOM.issueSerial;
+    if (!serialSelect) return;
+    
+    const currentVal = serialSelect.value;
+    
+    try {
+        let url = `/api/serials/all?workspace_id=${state.activeWorkspaceId}`;
+        if (productIdFilter) {
+            url += `&product_id=${productIdFilter}`;
+        }
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        if (res.ok && data.success) {
+            state.allSerials = data.serials || [];
+            serialSelect.innerHTML = '<option value="">-- Select Serial Number --</option>';
+            
+            state.allSerials.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.serial_no;
+                opt.dataset.productId = item.product_id;
+                opt.textContent = `${item.serial_no} (${item.product_name} ${item.model || ''})`;
+                serialSelect.appendChild(opt);
+            });
+
+            const customOpt = document.createElement('option');
+            customOpt.value = '__custom__';
+            customOpt.textContent = '➕ Type Custom Serial Number...';
+            serialSelect.appendChild(customOpt);
+
+            if (currentVal && Array.from(serialSelect.options).some(o => o.value === currentVal)) {
+                serialSelect.value = currentVal;
+            }
+        }
+    } catch (err) {
+        console.error('Error loading workspace serials', err);
+    }
+}
+
+if (DOM.issueSerial) {
+    DOM.issueSerial.addEventListener('change', () => {
+        const val = DOM.issueSerial.value;
+        if (val === '__custom__') {
+            if (DOM.customSerialContainer) DOM.customSerialContainer.style.display = 'block';
+            if (DOM.customSerialInput) {
+                DOM.customSerialInput.setAttribute('required', 'true');
+                DOM.customSerialInput.focus();
+            }
+        } else {
+            if (DOM.customSerialContainer) DOM.customSerialContainer.style.display = 'none';
+            if (DOM.customSerialInput) {
+                DOM.customSerialInput.removeAttribute('required');
+                DOM.customSerialInput.value = '';
+            }
+            if (val) {
+                const match = (state.allSerials || []).find(s => s.serial_no === val);
+                if (match && DOM.issueProductSelect) {
+                    let matchedOpt = Array.from(DOM.issueProductSelect.options).find(opt => opt.value == match.product_id);
+                    if (matchedOpt) {
+                        DOM.issueProductSelect.value = match.product_id;
+                    }
+                }
+            }
+        }
+    });
+}
+
+if (DOM.issueProductSelect) {
+    DOM.issueProductSelect.addEventListener('change', () => {
+        const prodId = DOM.issueProductSelect.value;
+        loadAllWorkspaceSerials(prodId || null);
+    });
+}
+
+async function populateNextImportedRecord() {
+    if (!state.importedQueue || state.importedQueue.length === 0) return false;
+    
+    const rec = state.importedQueue.shift();
+    
+    if (DOM.issueProductSelect) {
+        let matchedOpt = Array.from(DOM.issueProductSelect.options).find(opt => opt.value == rec.product_id);
+        if (matchedOpt) {
+            DOM.issueProductSelect.value = rec.product_id;
+        } else if (rec.product_name) {
+            matchedOpt = Array.from(DOM.issueProductSelect.options).find(opt => opt.text.toLowerCase().includes(rec.product_name.toLowerCase()));
+            if (matchedOpt) DOM.issueProductSelect.value = matchedOpt.value;
+        }
+        await loadAllWorkspaceSerials(rec.product_id || null);
+    }
+    
+    if (DOM.issueSerial) {
+        let matchedOpt = Array.from(DOM.issueSerial.options).find(opt => opt.value === rec.serial_no);
+        if (matchedOpt) {
+            DOM.issueSerial.value = rec.serial_no;
+            if (DOM.customSerialContainer) DOM.customSerialContainer.style.display = 'none';
+        } else if (rec.serial_no) {
+            DOM.issueSerial.value = '__custom__';
+            if (DOM.customSerialContainer) DOM.customSerialContainer.style.display = 'block';
+            if (DOM.customSerialInput) DOM.customSerialInput.value = rec.serial_no;
+        }
+    }
+    if (DOM.issueRecipient) DOM.issueRecipient.value = rec.recipient || '';
+    if (DOM.issueRecipientId) DOM.issueRecipientId.value = rec.recipient_id || '';
+    
+    if (DOM.issueDepartmentSelect) {
+        const deptLower = (rec.department || '').toLowerCase();
+        const deptOpt = Array.from(DOM.issueDepartmentSelect.options).find(opt => opt.value.toLowerCase() === deptLower);
+        if (deptOpt) {
+            DOM.issueDepartmentSelect.value = deptOpt.value;
+            if (DOM.issueDepartmentManualRow) DOM.issueDepartmentManualRow.style.display = 'none';
+        } else if (rec.department) {
+            DOM.issueDepartmentSelect.value = 'Other';
+            if (DOM.issueDepartmentManualRow) DOM.issueDepartmentManualRow.style.display = 'flex';
+            if (DOM.issueDepartmentManual) DOM.issueDepartmentManual.value = rec.department;
+        }
+    }
+    
+    if (DOM.issueType) {
+        DOM.issueType.value = (rec.type && rec.type.toLowerCase() === 'temporary') ? 'Temporary' : 'Permanent';
+        if (DOM.issueEndDateContainer) {
+            DOM.issueEndDateContainer.style.display = DOM.issueType.value === 'Temporary' ? 'block' : 'none';
+        }
+    }
+    
+    if (DOM.issueStartDate) DOM.issueStartDate.value = rec.start_date || new Date().toISOString().substring(0, 10);
+    if (DOM.issueEndDate) DOM.issueEndDate.value = rec.end_date || '';
+    if (DOM.issueSpecification) DOM.issueSpecification.value = rec.specification || '';
+    
+    const issueFormElement = document.getElementById('issue-asset-form');
+    if (issueFormElement) {
+        issueFormElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    const countMsg = state.importedQueue.length > 0 ? ` (${state.importedQueue.length} more in queue)` : '';
+    showToast(`Excel record loaded into Issue Form! Click 'Allocate Asset' to issue.${countMsg}`, 'success');
+    return true;
+}
+
 // ========================================== //
 //                 RETURNS WORKFLOW           //
 // ========================================== //
-
-// Toggle Manual Mode
-if (DOM.returnManualModeChk) {
-DOM.returnManualModeChk.addEventListener('change', () => {
-    const isManual = DOM.returnManualModeChk.checked;
-    if (isManual) {
-        DOM.returnSelectContainer.style.display = 'none';
-        DOM.returnEmpName.removeAttribute('readonly');
-        DOM.returnDeptName.removeAttribute('readonly');
-        DOM.returnEmpName.value = '';
-        DOM.returnDeptName.value = '';
-    } else {
-        DOM.returnSelectContainer.style.display = 'block';
-        DOM.returnEmpName.setAttribute('readonly', 'true');
-        DOM.returnDeptName.setAttribute('readonly', 'true');
-        autofillReturnDropdown();
-    }
-});
-}
 
 // Delayed autocomplete search key
 let returnSearchTimeout = null;
@@ -897,9 +1121,7 @@ if (DOM.returnSearchKey) {
 DOM.returnSearchKey.addEventListener('input', () => {
     clearTimeout(returnSearchTimeout);
     returnSearchTimeout = setTimeout(() => {
-        if (!DOM.returnManualModeChk.checked) {
-            autofillReturnDropdown();
-        }
+        autofillReturnDropdown();
     }, 300);
 });
 }
@@ -961,40 +1183,23 @@ function selectReturnedDetails() {
     DOM.returnDeptName.value = activeIssue.department;
 }
 
-// Return form submit
 if (DOM.returnAssetForm) {
 DOM.returnAssetForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const manual = DOM.returnManualModeChk.checked;
+    
+    const issue_id = parseInt(DOM.returnAssetSelect.value);
+    if (!issue_id) {
+        showToast('Choose active asset log to return', 'warning');
+        return;
+    }
     
     let payload = {
-        manual_return: manual,
         return_date: DOM.returnDate.value,
         remark: DOM.returnRemark.value,
         damaged_ewaste: DOM.returnEwasteChk.checked,
-        workspace_id: state.activeWorkspaceId
+        workspace_id: state.activeWorkspaceId,
+        issue_id: issue_id
     };
-    
-    if (manual) {
-        payload.serial_no = DOM.returnSearchKey.value.trim();
-        payload.recipient = DOM.returnEmpName.value;
-        payload.department = DOM.returnDeptName.value;
-        
-        // Manual mode requires select product dropdown from Issue form list
-        const issueProductSelectValue = DOM.issueProductSelect.value;
-        if (!issueProductSelectValue) {
-            alert('To register a manual return, please select the target product category in the "Issue Asset" dropdown list first!');
-            return;
-        }
-        payload.product_id = parseInt(issueProductSelectValue);
-    } else {
-        const issue_id = parseInt(DOM.returnAssetSelect.value);
-        if (!issue_id) {
-            showToast('Choose active asset log to return', 'warning');
-            return;
-        }
-        payload.issue_id = issue_id;
-    }
     
     try {
         const res = await fetch('/api/assets/return', {
@@ -1012,55 +1217,13 @@ DOM.returnAssetForm.addEventListener('submit', async (e) => {
             DOM.returnDeptName.setAttribute('readonly', 'true');
             loadWorkspaceInventory();
         } else {
-            alert(data.error || 'Failed to process return');
+            showToast(data.error || 'Failed to process return', 'danger');
         }
     } catch (err) {
         showToast('Connection error', 'danger');
     }
 });
 }
-
-// Manual return modal triggers
-if (DOM.manualReturnModalBtn) {
-DOM.manualReturnModalBtn.addEventListener('click', () => {
-    DOM.manualReturnForm.reset();
-    openModal(DOM.manualReturnModal);
-});
-}
-
-DOM.manualReturnForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const payload = {
-        manual_return: true,
-        product_id: parseInt(DOM.manualReturnProductSelect.value),
-        serial_no: DOM.manualReturnSerial.value,
-        recipient: DOM.manualReturnEmp.value,
-        department: DOM.manualReturnDept.value,
-        return_date: new Date().toISOString().substring(0, 10),
-        remark: 'Manual Return (Custom Modal)',
-        damaged_ewaste: DOM.manualReturnEwaste.checked,
-        workspace_id: state.activeWorkspaceId
-    };
-    
-    try {
-        const res = await fetch('/api/assets/return', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        
-        if (res.ok && data.success) {
-            showToast('Manual return logged', 'success');
-            closeModal(DOM.manualReturnModal);
-            loadWorkspaceInventory();
-        } else {
-            alert(data.error || 'Submission failed');
-        }
-    } catch (err) {
-        showToast('Server update error', 'danger');
-    }
-});
 
 // ========================================== //
 //             TABLE & LOGS ACTIONS           //
@@ -1107,19 +1270,30 @@ async function loadTableLogs() {
             btnHistory.title = 'View Log History';
             btnHistory.addEventListener('click', () => showHistory(r.serial_no));
             
+            actionsTd.appendChild(btnHistory);
+
+            if (!r.returned) {
+                const btnShift = document.createElement('button');
+                btnShift.className = 'btn btn-warning btn-sm';
+                btnShift.innerHTML = '<i class="fa-solid fa-right-left"></i> Shift';
+                btnShift.title = 'Shift / Reassign Asset Location & Dept';
+                btnShift.addEventListener('click', () => openShiftModal(r));
+                actionsTd.appendChild(btnShift);
+            }
+
             const btnDelete = document.createElement('button');
             btnDelete.className = 'btn btn-danger btn-sm';
             btnDelete.innerHTML = '<i class="fa-regular fa-trash-can"></i>';
             btnDelete.title = 'Delete Log & Re-Stock';
             btnDelete.addEventListener('click', () => deleteIssue(r.id, r.serial_no));
             
-            actionsTd.appendChild(btnHistory);
             actionsTd.appendChild(btnDelete);
             
             tr.innerHTML = `
                 <td><b>${r.serial_no}</b></td>
                 <td>${r.product_name || '—'}</td>
                 <td>${r.product_model || '—'}</td>
+                <td>${r.specification || '—'}</td>
                 <td>${r.recipient || '—'}</td>
                 <td>${r.recipient_id || '—'}</td>
                 <td>${r.department || '—'}</td>
@@ -1195,9 +1369,39 @@ DOM.paginationNext.addEventListener('click', () => {
     }
 });
 
+// E-Waste Pagination
+DOM.ewastePaginationPrev.addEventListener('click', () => {
+    if (state.ewasteCurrentPage > 0) {
+        state.ewasteCurrentPage--;
+        loadEWasteLogs();
+    }
+});
+
+DOM.ewastePaginationNext.addEventListener('click', () => {
+    if (state.ewasteCurrentPage + 1 < state.ewasteTotalPages) {
+        state.ewasteCurrentPage++;
+        loadEWasteLogs();
+    }
+});
+
+// Returns Pagination
+DOM.returnsPaginationPrev.addEventListener('click', () => {
+    if (state.returnsCurrentPage > 0) {
+        state.returnsCurrentPage--;
+        loadReturnsHistory();
+    }
+});
+
+DOM.returnsPaginationNext.addEventListener('click', () => {
+    if (state.returnsCurrentPage + 1 < state.returnsTotalPages) {
+        state.returnsCurrentPage++;
+        loadReturnsHistory();
+    }
+});
+
 // Delete Issue Record
 async function deleteIssue(id, serial) {
-    if (confirm(`Delete issue record for serial "${serial}"?\nUnreturned items will restore +1 stock.`)) {
+    if (await customConfirm(`Delete issue record for serial "${serial}"?\nUnreturned items will restore +1 stock.`)) {
         try {
             const res = await fetch(`/api/assets/delete?issue_id=${id}`, { method: 'DELETE' });
             const data = await res.json();
@@ -1205,12 +1409,322 @@ async function deleteIssue(id, serial) {
                 showToast('Record removed successfully', 'success');
                 loadWorkspaceInventory();
             } else {
-                alert(data.error || 'Failed to remove log');
+                showToast(data.error || 'Failed to remove log', 'danger');
             }
         } catch (err) {
             showToast('Server update error', 'danger');
         }
     }
+}
+
+// Shift Asset Modal Functions
+let shiftModalAutofillMap = {};
+
+async function preloadShiftModalDropdown() {
+    const assetSelect = document.getElementById('shift-modal-asset-select');
+    if (!assetSelect || !state.activeWorkspaceId) return;
+
+    try {
+        const res = await fetch(`/api/assets/search?workspace_id=${state.activeWorkspaceId}&filter=Only+Active&limit=1000`);
+        const data = await res.json();
+        if (!data || !data.rows) return;
+
+        shiftModalAutofillMap = {};
+        assetSelect.innerHTML = '<option value="">-- Choose active asset --</option>';
+        data.rows.forEach(r => {
+            shiftModalAutofillMap[r.id] = r;
+            const opt = document.createElement('option');
+            opt.value = r.id;
+            opt.textContent = `${r.serial_no} | ${r.product_name || 'Asset'} (${r.product_model || '—'}) — ${r.recipient || 'N/A'} (${r.department || 'N/A'})`;
+            assetSelect.appendChild(opt);
+        });
+    } catch (err) {
+        console.error('Error loading shift modal assets', err);
+    }
+}
+
+function openShiftModal(asset = null) {
+    if (!DOM.shiftAssetModal) return;
+    
+    DOM.shiftRecipient.value = '';
+    DOM.shiftRecipientId.value = '';
+    DOM.shiftDepartmentSelect.value = '';
+    if (DOM.shiftDepartmentManual) DOM.shiftDepartmentManual.value = '';
+    if (DOM.shiftDepartmentManualRow) DOM.shiftDepartmentManualRow.style.display = 'none';
+    DOM.shiftDate.value = new Date().toISOString().substring(0, 10);
+    DOM.shiftRemark.value = '';
+
+    const selectContainer = document.getElementById('shift-modal-select-container');
+    const searchKeyInput = document.getElementById('shift-modal-search-key');
+    if (searchKeyInput) searchKeyInput.value = '';
+
+    if (asset) {
+        if (selectContainer) selectContainer.style.display = 'none';
+        DOM.shiftIssueId.value = asset.id;
+        DOM.shiftAssetSerialLabel.textContent = `Serial: ${asset.serial_no} (${asset.product_name || ''} ${asset.product_model || ''})`;
+        DOM.shiftAssetCurrentInfo.textContent = `Current Holder: ${asset.recipient} (ID: ${asset.recipient_id || 'N/A'}) | Dept: ${asset.department}`;
+    } else {
+        if (selectContainer) selectContainer.style.display = 'block';
+        DOM.shiftIssueId.value = '';
+        DOM.shiftAssetSerialLabel.textContent = 'Serial: — (Select active asset above)';
+        DOM.shiftAssetCurrentInfo.textContent = 'Current Holder: — | Dept: —';
+        preloadShiftModalDropdown();
+    }
+
+    openModal(DOM.shiftAssetModal);
+}
+
+const headerShiftBtn = document.getElementById('header-shift-btn');
+if (headerShiftBtn) {
+    headerShiftBtn.addEventListener('click', () => openShiftModal());
+}
+
+const tableShiftBtn = document.getElementById('table-shift-btn');
+if (tableShiftBtn) {
+    tableShiftBtn.addEventListener('click', () => openShiftModal());
+}
+
+const shiftModalAssetSelect = document.getElementById('shift-modal-asset-select');
+if (shiftModalAssetSelect) {
+    shiftModalAssetSelect.addEventListener('change', () => {
+        const id = shiftModalAssetSelect.value;
+        if (id && shiftModalAutofillMap[id]) {
+            const item = shiftModalAutofillMap[id];
+            DOM.shiftIssueId.value = item.id;
+            DOM.shiftAssetSerialLabel.textContent = `Serial: ${item.serial_no} (${item.product_name || ''} ${item.product_model || ''})`;
+            DOM.shiftAssetCurrentInfo.textContent = `Current Holder: ${item.recipient} (ID: ${item.recipient_id || 'N/A'}) | Dept: ${item.department}`;
+        }
+    });
+}
+
+const shiftModalSearchKey = document.getElementById('shift-modal-search-key');
+if (shiftModalSearchKey) {
+    let shiftTimeout = null;
+    shiftModalSearchKey.addEventListener('input', () => {
+        clearTimeout(shiftTimeout);
+        shiftTimeout = setTimeout(async () => {
+            const key = shiftModalSearchKey.value.trim();
+            if (!key) {
+                preloadShiftModalDropdown();
+                return;
+            }
+            try {
+                const res = await fetch(`/api/assets/autofill?key=${encodeURIComponent(key)}`);
+                const data = await res.json();
+                const assetSelect = document.getElementById('shift-modal-asset-select');
+                if (!assetSelect) return;
+                shiftModalAutofillMap = {};
+                assetSelect.innerHTML = '';
+                if (data.length === 0) {
+                    assetSelect.innerHTML = '<option value="">-- No matching active assets --</option>';
+                    return;
+                }
+                data.forEach(item => {
+                    shiftModalAutofillMap[item.id] = item;
+                    const opt = document.createElement('option');
+                    opt.value = item.id;
+                    opt.textContent = `${item.serial_no} | ${item.name} (${item.model}) — ${item.recipient} (${item.department})`;
+                    assetSelect.appendChild(opt);
+                });
+                if (data.length > 0) {
+                    assetSelect.value = data[0].id;
+                    assetSelect.dispatchEvent(new Event('change'));
+                }
+            } catch (err) {
+                console.error('Shift modal search error', err);
+            }
+        }, 300);
+    });
+}
+
+if (DOM.shiftDepartmentSelect) {
+    DOM.shiftDepartmentSelect.addEventListener('change', () => {
+        if (DOM.shiftDepartmentSelect.value === 'Other') {
+            DOM.shiftDepartmentManualRow.style.display = 'flex';
+            if (DOM.shiftDepartmentManual) DOM.shiftDepartmentManual.setAttribute('required', 'true');
+        } else {
+            if (DOM.shiftDepartmentManualRow) DOM.shiftDepartmentManualRow.style.display = 'none';
+            if (DOM.shiftDepartmentManual) {
+                DOM.shiftDepartmentManual.removeAttribute('required');
+                DOM.shiftDepartmentManual.value = '';
+            }
+        }
+    });
+}
+
+if (DOM.shiftAssetForm) {
+    DOM.shiftAssetForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const issue_id = parseInt(DOM.shiftIssueId.value);
+        if (!issue_id) {
+            showToast('Please select an active asset to shift', 'warning');
+            return;
+        }
+
+        const selectedDept = DOM.shiftDepartmentSelect.value;
+        const finalDept = selectedDept === 'Other' ? DOM.shiftDepartmentManual.value.trim() : selectedDept;
+
+        const payload = {
+            issue_id: issue_id,
+            to_recipient: DOM.shiftRecipient.value.trim(),
+            to_recipient_id: DOM.shiftRecipientId.value.trim(),
+            to_department: finalDept,
+            transfer_date: DOM.shiftDate.value,
+            remark: DOM.shiftRemark.value.trim()
+        };
+
+        try {
+            const res = await fetch('/api/assets/shift', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                showToast('Asset shifted to new department/user successfully!', 'success');
+                closeModal(DOM.shiftAssetModal);
+                loadWorkspaceInventory();
+            } else {
+                showToast(data.error || 'Failed to shift asset', 'danger');
+            }
+        } catch (err) {
+            showToast('Connection error during asset shift', 'danger');
+        }
+    });
+}
+
+// Card D: Shift Asset Form Logic
+let cardShiftAutofillMap = {};
+
+let cardShiftSearchTimeout = null;
+if (DOM.cardShiftSearchKey) {
+    DOM.cardShiftSearchKey.addEventListener('input', () => {
+        clearTimeout(cardShiftSearchTimeout);
+        cardShiftSearchTimeout = setTimeout(() => {
+            autofillCardShiftDropdown();
+        }, 300);
+    });
+}
+
+async function autofillCardShiftDropdown() {
+    if (!DOM.cardShiftSearchKey || !DOM.cardShiftAssetSelect) return;
+    const key = DOM.cardShiftSearchKey.value.trim();
+    if (!key) {
+        DOM.cardShiftAssetSelect.innerHTML = '<option value="">-- Type search key --</option>';
+        if (DOM.cardShiftCurrentEmp) DOM.cardShiftCurrentEmp.value = '';
+        if (DOM.cardShiftCurrentDept) DOM.cardShiftCurrentDept.value = '';
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/assets/autofill?key=${encodeURIComponent(key)}`);
+        const data = await res.json();
+
+        cardShiftAutofillMap = {};
+        DOM.cardShiftAssetSelect.innerHTML = '';
+
+        if (data.length === 0) {
+            DOM.cardShiftAssetSelect.innerHTML = '<option value="">-- No matching active assets --</option>';
+            if (DOM.cardShiftCurrentEmp) DOM.cardShiftCurrentEmp.value = '';
+            if (DOM.cardShiftCurrentDept) DOM.cardShiftCurrentDept.value = '';
+            return;
+        }
+
+        data.forEach(item => {
+            const label = `${item.serial_no} | ${item.name} (${item.model})`;
+            cardShiftAutofillMap[item.id] = item;
+
+            const opt = document.createElement('option');
+            opt.value = item.id;
+            opt.textContent = label;
+            DOM.cardShiftAssetSelect.appendChild(opt);
+        });
+
+        selectCardShiftDetails();
+    } catch (err) {
+        console.error('Card shift autofill sync error', err);
+    }
+}
+
+if (DOM.cardShiftAssetSelect) {
+    DOM.cardShiftAssetSelect.addEventListener('change', selectCardShiftDetails);
+}
+
+function selectCardShiftDetails() {
+    const issueId = DOM.cardShiftAssetSelect ? DOM.cardShiftAssetSelect.value : null;
+    if (!issueId || !cardShiftAutofillMap[issueId]) {
+        if (DOM.cardShiftCurrentEmp) DOM.cardShiftCurrentEmp.value = '';
+        if (DOM.cardShiftCurrentDept) DOM.cardShiftCurrentDept.value = '';
+        return;
+    }
+
+    const activeIssue = cardShiftAutofillMap[issueId];
+    if (DOM.cardShiftCurrentEmp) DOM.cardShiftCurrentEmp.value = activeIssue.recipient || '';
+    if (DOM.cardShiftCurrentDept) DOM.cardShiftCurrentDept.value = activeIssue.department || '';
+}
+
+if (DOM.cardShiftNewDeptSelect) {
+    DOM.cardShiftNewDeptSelect.addEventListener('change', () => {
+        if (DOM.cardShiftNewDeptSelect.value === 'Other') {
+            if (DOM.cardShiftNewDeptManualRow) DOM.cardShiftNewDeptManualRow.style.display = 'flex';
+            if (DOM.cardShiftNewDeptManual) DOM.cardShiftNewDeptManual.setAttribute('required', 'true');
+        } else {
+            if (DOM.cardShiftNewDeptManualRow) DOM.cardShiftNewDeptManualRow.style.display = 'none';
+            if (DOM.cardShiftNewDeptManual) {
+                DOM.cardShiftNewDeptManual.removeAttribute('required');
+                DOM.cardShiftNewDeptManual.value = '';
+            }
+        }
+    });
+}
+
+if (DOM.cardShiftAssetForm) {
+    if (DOM.cardShiftDate && !DOM.cardShiftDate.value) {
+        DOM.cardShiftDate.value = new Date().toISOString().substring(0, 10);
+    }
+
+    DOM.cardShiftAssetForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const issue_id = parseInt(DOM.cardShiftAssetSelect.value);
+        if (!issue_id) {
+            showToast('Choose an active asset log to shift', 'warning');
+            return;
+        }
+
+        const selectedDept = DOM.cardShiftNewDeptSelect.value;
+        const finalDept = selectedDept === 'Other' ? DOM.cardShiftNewDeptManual.value.trim() : selectedDept;
+
+        const payload = {
+            issue_id: issue_id,
+            to_recipient: DOM.cardShiftNewEmp.value.trim(),
+            to_recipient_id: DOM.cardShiftNewEmpId.value.trim(),
+            to_department: finalDept,
+            transfer_date: DOM.cardShiftDate.value,
+            remark: DOM.cardShiftRemark.value.trim()
+        };
+
+        try {
+            const res = await fetch('/api/assets/shift', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                showToast('Asset location shifted successfully!', 'success');
+                DOM.cardShiftAssetForm.reset();
+                if (DOM.cardShiftDate) DOM.cardShiftDate.value = new Date().toISOString().substring(0, 10);
+                if (DOM.cardShiftNewDeptManualRow) DOM.cardShiftNewDeptManualRow.style.display = 'none';
+                loadWorkspaceInventory();
+            } else {
+                showToast(data.error || 'Failed to shift asset', 'danger');
+            }
+        } catch (err) {
+            showToast('Connection error during shift', 'danger');
+        }
+    });
 }
 
 // Show History Modal
@@ -1231,9 +1745,14 @@ async function showHistory(serial) {
         
         data.forEach(h => {
             const tr = document.createElement('tr');
+            let pillClass = (h.action || '').toLowerCase();
+            if (pillClass.includes('shift')) pillClass = 'overdue'; // highlight shift actions cleanly
+            else if (pillClass.includes('issued')) pillClass = 'active';
+            else if (pillClass.includes('returned')) pillClass = 'returned';
+
             tr.innerHTML = `
                 <td>${h.date || '—'}</td>
-                <td><span class="status-pill ${h.action.toLowerCase()}">${h.action}</span></td>
+                <td><span class="status-pill ${pillClass}">${h.action}</span></td>
                 <td>${h.user || '—'}</td>
                 <td>${h.department || '—'}</td>
                 <td>${h.remark || '—'}</td>
@@ -1257,16 +1776,21 @@ DOM.tableExportBtn.addEventListener('click', () => {
 
 async function loadEWasteLogs() {
     try {
-        const res = await fetch('/api/ewaste');
+        const page = state.ewasteCurrentPage;
+        const res = await fetch(`/api/ewaste?page=${page}`);
         const data = await res.json();
         
         DOM.ewasteTableBody.innerHTML = '';
-        if (data.length === 0) {
+        if (!data.rows || data.rows.length === 0) {
             DOM.ewasteTableBody.innerHTML = getEmptyStateRowHtml(7, 'fa-solid fa-trash-can-slash', 'E-Waste Storage Vault is Empty', 'No assets have been disposed of in this workspace.');
+            DOM.ewastePaginationLabel.textContent = 'Page 1 / 1';
+            state.ewasteTotalPages = 1;
+            DOM.ewastePaginationPrev.disabled = true;
+            DOM.ewastePaginationNext.disabled = true;
             return;
         }
         
-        data.forEach(e => {
+        data.rows.forEach(e => {
             const tr = document.createElement('tr');
             
             const actionsTd = document.createElement('td');
@@ -1296,13 +1820,19 @@ async function loadEWasteLogs() {
             tr.appendChild(actionsTd);
             DOM.ewasteTableBody.appendChild(tr);
         });
+
+        // Pagination updates
+        state.ewasteTotalPages = Math.max(1, Math.ceil(data.total_rows / data.limit));
+        DOM.ewastePaginationLabel.textContent = `Page ${state.ewasteCurrentPage + 1} / ${state.ewasteTotalPages}`;
+        DOM.ewastePaginationPrev.disabled = state.ewasteCurrentPage === 0;
+        DOM.ewastePaginationNext.disabled = state.ewasteCurrentPage + 1 >= state.ewasteTotalPages;
     } catch (err) {
         showToast('Error fetching E-Waste files', 'danger');
     }
 }
 
 async function restoreEWaste(id, serial) {
-    if (confirm(`Restore asset "${serial}" from E-waste back to inventory stock?`)) {
+    if (await customConfirm(`Restore asset "${serial}" from E-waste back to inventory stock?`)) {
         try {
             const res = await fetch('/api/ewaste/restore', {
                 method: 'POST',
@@ -1314,7 +1844,7 @@ async function restoreEWaste(id, serial) {
                 showToast('Asset restored to stock inventory', 'success');
                 loadEWasteLogs();
             } else {
-                alert(data.error || 'Restore failed');
+                showToast(data.error || 'Restore failed', 'danger');
             }
         } catch (err) {
             showToast('Server update error', 'danger');
@@ -1323,7 +1853,7 @@ async function restoreEWaste(id, serial) {
 }
 
 async function deleteEWaste(id, serial) {
-    if (confirm(`Permanently delete E-Waste disposal record for "${serial}"?\nThis action is irreversible.`)) {
+    if (await customConfirm(`Permanently delete E-Waste disposal record for "${serial}"?\nThis action is irreversible.`)) {
         try {
             const res = await fetch(`/api/ewaste/delete?id=${id}`, { method: 'DELETE' });
             const data = await res.json();
@@ -1331,7 +1861,7 @@ async function deleteEWaste(id, serial) {
                 showToast('Record deleted permanently', 'success');
                 loadEWasteLogs();
             } else {
-                alert(data.error || 'Delete failed');
+                showToast(data.error || 'Delete failed', 'danger');
             }
         } catch (err) {
             showToast('Server update error', 'danger');
@@ -1350,16 +1880,21 @@ DOM.ewasteExportBtn.addEventListener('click', () => {
 
 async function loadReturnsHistory() {
     try {
-        const res = await fetch('/api/returns');
+        const page = state.returnsCurrentPage;
+        const res = await fetch(`/api/returns?page=${page}`);
         const data = await res.json();
         
         DOM.returnsTableBody.innerHTML = '';
-        if (data.length === 0) {
+        if (!data.rows || data.rows.length === 0) {
             DOM.returnsTableBody.innerHTML = getEmptyStateRowHtml(7, 'fa-solid fa-clipboard-check', 'No Returns Logged Yet', 'Assets returned by employees will show up in this ledger.');
+            DOM.returnsPaginationLabel.textContent = 'Page 1 / 1';
+            state.returnsTotalPages = 1;
+            DOM.returnsPaginationPrev.disabled = true;
+            DOM.returnsPaginationNext.disabled = true;
             return;
         }
         
-        data.forEach(r => {
+        data.rows.forEach(r => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><b>${r.serial_no}</b></td>
@@ -1372,6 +1907,12 @@ async function loadReturnsHistory() {
             `;
             DOM.returnsTableBody.appendChild(tr);
         });
+
+        // Pagination updates
+        state.returnsTotalPages = Math.max(1, Math.ceil(data.total_rows / data.limit));
+        DOM.returnsPaginationLabel.textContent = `Page ${state.returnsCurrentPage + 1} / ${state.returnsTotalPages}`;
+        DOM.returnsPaginationPrev.disabled = state.returnsCurrentPage === 0;
+        DOM.returnsPaginationNext.disabled = state.returnsCurrentPage + 1 >= state.returnsTotalPages;
     } catch (err) {
         showToast('Error syncing returns registry', 'danger');
     }
@@ -1416,8 +1957,8 @@ async function loadReports() {
         
         // Create elegant gradient color matching design theme (indigo-violet)
         const gradient = ctx.createLinearGradient(0, 0, 0, 350);
-        gradient.addColorStop(0, '#8b5cf6'); // Accent (violet)
-        gradient.addColorStop(1, '#6366f1'); // Primary (indigo)
+        gradient.addColorStop(0, '#0d9488'); // Accent (violet)
+        gradient.addColorStop(1, '#0284c7'); // Primary (indigo)
         
         state.reportsChart = new Chart(ctx, {
             type: 'bar',
@@ -1441,7 +1982,7 @@ async function loadReports() {
                         display: false
                     },
                     tooltip: {
-                        backgroundColor: '#1e1b4b',
+                        backgroundColor: '#0f172a',
                         titleFont: { family: 'Outfit', size: 13, weight: 'bold' },
                         bodyFont: { family: 'Inter', size: 12 },
                         padding: 12,
@@ -1697,16 +2238,84 @@ DOM.importExcelForm.addEventListener('submit', async (e) => {
         const data = await res.json();
         
         if (res.ok && data.success) {
-            showToast('Excel sheet items imported successfully!', 'success');
             closeModal(DOM.importModal);
-            loadWorkspaceInventory();
+            state.importedQueue = data.records || [];
+            await loadWorkspaceInventory();
+            populateNextImportedRecord();
         } else {
-            alert(data.error || 'Import failed');
+            showToast(data.error || 'Import failed', 'danger');
         }
     } catch (err) {
         showToast('Connection error during upload', 'danger');
     }
 });
+
+// DELETE DATA ACTION
+if (DOM.tableClearBtn) {
+    DOM.tableClearBtn.addEventListener('click', () => {
+        openModal(DOM.clearDataModal);
+    });
+}
+
+if (DOM.confirmClearDataBtn) {
+    DOM.confirmClearDataBtn.addEventListener('click', async () => {
+        const clearType = DOM.clearDataTypeSelect ? DOM.clearDataTypeSelect.value : 'all';
+        
+        if (clearType === 'reset_all') {
+            if (await customConfirm("⚠️ DANGER: Are you sure you want to perform a FULL SYSTEM RESET?\n\nThis will permanently delete ALL product stock, issued asset records, e-waste logs, and custom workspaces across the entire application for a clean fresh start!")) {
+                try {
+                    showToast('Performing full system reset...', 'info');
+                    const res = await fetch('/api/system/reset', { method: 'POST' });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        showToast('System reset completed! Starting fresh...', 'success');
+                        closeModal(DOM.clearDataModal);
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        showToast(data.error || 'System reset failed', 'danger');
+                    }
+                } catch (err) {
+                    showToast('Server error during system reset', 'danger');
+                }
+            }
+            return;
+        }
+
+        const typeLabels = {
+            'logs': 'All Issued Asset Records',
+            'stock': 'All Product Stock',
+            'all': 'All Workspace Stock & Records'
+        };
+        const label = typeLabels[clearType] || 'selected data';
+
+        if (await customConfirm(`Are you sure you want to permanently delete ${label} in the current workspace?`)) {
+            try {
+                showToast('Deleting data...', 'info');
+                const res = await fetch('/api/data/clear', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        workspace_id: state.activeWorkspaceId,
+                        type: clearType
+                    })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    showToast(`${label} deleted successfully!`, 'success');
+                    closeModal(DOM.clearDataModal);
+                    loadWorkspaceInventory();
+                } else {
+                    showToast(data.error || 'Delete failed', 'danger');
+                }
+            } catch (err) {
+                showToast('Server error during deletion', 'danger');
+            }
+        }
+    });
+}
 
 // ========================================== //
 //                 SYNC/REFRESH SYSTEM        //
@@ -1734,14 +2343,15 @@ async function loadWorkspaceInventory() {
     
     // Sync metrics dashboard numbers
     try {
-        const res = await fetch(`/api/assets/search?workspace_id=${state.activeWorkspaceId}&limit=1000`);
+        const res = await fetch(`/api/reports/stats?workspace_id=${state.activeWorkspaceId}`);
         const data = await res.json();
         
-        const active = data.rows.filter(x => x.status === 'Active' || x.status === 'OVERDUE').length;
-        const returned = data.rows.filter(x => x.status === 'Returned').length;
-        
-        animateCounter(DOM.statActive, active);
-        animateCounter(DOM.statReturned, returned);
+        if (DOM.statActive) animateCounter(DOM.statActive, data.active || 0);
+        if (DOM.statReturned) animateCounter(DOM.statReturned, data.returned || 0);
+
+        const overdueRes = await fetch(`/api/assets/overdue?workspace_id=${state.activeWorkspaceId}`);
+        const overdueData = await overdueRes.json();
+        if (DOM.statOverdue) animateCounter(DOM.statOverdue, overdueData.length || 0);
     } catch (err) {
         console.error('Error fetching statistics', err);
     }
@@ -1749,6 +2359,45 @@ async function loadWorkspaceInventory() {
     // Load products list and reload logs table
     await loadProducts();
     await loadTableLogs();
+    await loadAllWorkspaceSerials();
+    await preloadActiveAssetsForDropdowns();
+}
+
+async function preloadActiveAssetsForDropdowns() {
+    if (!state.activeWorkspaceId) return;
+    try {
+        const res = await fetch(`/api/assets/search?workspace_id=${state.activeWorkspaceId}&filter=Only+Active&limit=1000`);
+        const data = await res.json();
+        if (!data || !data.rows) return;
+
+        // Populate return asset select
+        if (DOM.returnAssetSelect) {
+            autofillIssueMap = {};
+            DOM.returnAssetSelect.innerHTML = '<option value="">-- Choose active asset --</option>';
+            data.rows.forEach(r => {
+                autofillIssueMap[r.id] = r;
+                const opt = document.createElement('option');
+                opt.value = r.id;
+                opt.textContent = `${r.serial_no} | ${r.product_name || 'Asset'} (${r.product_model || '—'}) — ${r.recipient || 'N/A'} (${r.department || 'N/A'})`;
+                DOM.returnAssetSelect.appendChild(opt);
+            });
+        }
+
+        // Populate card shift asset select
+        if (DOM.cardShiftAssetSelect) {
+            cardShiftAutofillMap = {};
+            DOM.cardShiftAssetSelect.innerHTML = '<option value="">-- Choose active asset --</option>';
+            data.rows.forEach(r => {
+                cardShiftAutofillMap[r.id] = r;
+                const opt = document.createElement('option');
+                opt.value = r.id;
+                opt.textContent = `${r.serial_no} | ${r.product_name || 'Asset'} (${r.product_model || '—'}) — ${r.recipient || 'N/A'} (${r.department || 'N/A'})`;
+                DOM.cardShiftAssetSelect.appendChild(opt);
+            });
+        }
+    } catch (err) {
+        console.error('Error preloading active assets for dropdowns', err);
+    }
 }
 
 async function initApp() {

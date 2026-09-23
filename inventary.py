@@ -13,13 +13,23 @@ def find_free_port():
     return port
 
 port = find_free_port()
+ 
+def get_local_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
 
 def run_flask():
     app = create_app()
-    app.run(host="127.0.0.1", port=port, debug=False, use_reloader=False)
-
+    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
+                                                              
 if __name__ == "__main__":
-    # Ensure database schema is initialized
+    # Ensure database schema is initialized                                                                 
     init_db()
     
     # Start Flask server in a background daemon thread
@@ -35,8 +45,7 @@ if __name__ == "__main__":
         url=f"http://127.0.0.1:{port}",
         width=1400,
         height=850,
-        resizable=True,
-        min_size=(900, 600)                                           
+        resizable=True,                                                                  
+        min_size=(900, 600)                       
     )
-    
-    
+    webview.start()                                                    

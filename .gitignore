@@ -34,3 +34,10 @@ backup/
 # IDE files
 .vscode/
 .idea/
+
+# Environments
+.env
+.venv/
+venv/
+env/
+static/.venv/

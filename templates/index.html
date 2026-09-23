@@ -13,7 +13,7 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Main CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v=2.0.1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v=2.5.0">
 </head>
 <body>
 
@@ -25,6 +25,9 @@
         <div class="auth-orb auth-orb-3"></div>
         <div class="auth-card">
             <div class="auth-left">
+                <div class="auth-emblem">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
                 <h2>ASSET<br>MANAGEMENT</h2>
                 <p>Track Assets<br>Manage Inventory<br>Control Devices</p>
                 <div class="auth-decor"></div>
@@ -126,6 +129,9 @@
                         <button id="delete-workspace-btn" class="btn btn-icon btn-danger" title="Delete Current Workspace">
                             <i class="fa-solid fa-trash"></i>
                         </button>
+                        <button id="header-shift-btn" class="btn btn-warning btn-sm" style="margin-left: 10px; font-weight: 700; height: 36px; padding: 0 14px;" title="Shift Asset Location & Department">
+                            <i class="fa-solid fa-right-left"></i> Shift Asset
+                        </button>
                     </div>
                 </div>
 
@@ -181,7 +187,7 @@
                 <!-- METRIC CARDS REMOVED (Relocated to Header Bar) -->
 
                 <!-- DUAL SPLIT ROW: OPERATIONS AND FORMS -->
-                <div class="operations-grid" id="operations-forms-grid" style="display: none;">
+                <div class="operations-grid" id="operations-forms-grid">
                     
                     <!-- CARD A: PRODUCT MANAGEMENT -->
                     <div class="card operation-card">
@@ -191,14 +197,14 @@
                         <div class="card-body">
                             <!-- ADD STOCK SUB-FORM -->
                             <form id="add-product-form" class="compact-form">
-                                <div class="form-group">
-                                    <label for="add-p-name">Product Name</label>
-                                    <div class="input-wrapper">
-                                        <input type="text" id="add-p-name" placeholder="e.g. Laptop" required>
-                                        <i class="fa-solid fa-laptop input-icon"></i>
-                                    </div>
-                                </div>
                                 <div class="form-row">
+                                    <div class="form-group flex-2">
+                                        <label for="add-p-name">Product Name</label>
+                                        <div class="input-wrapper">
+                                            <input type="text" id="add-p-name" placeholder="e.g. Laptop" required>
+                                            <i class="fa-solid fa-laptop input-icon"></i>
+                                        </div>
+                                    </div>
                                     <div class="form-group flex-2">
                                         <label for="add-p-model">Model</label>
                                         <div class="input-wrapper">
@@ -206,34 +212,49 @@
                                             <i class="fa-solid fa-circle-info input-icon"></i>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="form-row">
                                     <div class="form-group flex-1">
                                         <label for="add-p-qty">Quantity</label>
                                         <div class="input-wrapper">
-                                            <input type="number" id="add-p-qty" min="1" placeholder="e.g. 5" required>
+                                            <input type="number" id="add-p-qty" min="1" placeholder="Qty" required>
                                             <i class="fa-solid fa-hashtag input-icon"></i>
                                         </div>
                                     </div>
+                                    <div class="form-group flex-1">
+                                        <label for="add-p-min-stock">Min Alert</label>
+                                        <div class="input-wrapper">
+                                            <input type="number" id="add-p-min-stock" min="1" value="5" placeholder="5" required>
+                                            <i class="fa-solid fa-bell input-icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="form-group flex-2" style="display: flex; align-items: flex-end;">
+                                        <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-plus"></i> Add Stock</button>
+                                    </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-plus"></i> Add New Product Stock</button>
                             </form>
                             
-                            <hr class="card-separator">
+                            <hr class="card-separator" style="margin: 10px 0;">
                             
                             <!-- MANAGE STOCK ACTIONS -->
                             <div class="manage-product-section">
-                                <div class="form-group">
-                                    <label for="manage-product-select">Select Registered Product</label>
-                                    <div class="input-wrapper">
-                                        <select id="manage-product-select">
-                                            <option value="">-- Choose product --</option>
-                                        </select>
-                                        <i class="fa-solid fa-boxes-stacked input-icon"></i>
+                                <div class="form-row" style="margin-bottom: 0;">
+                                    <div class="form-group flex-2">
+                                        <label for="manage-product-select">Select Registered Product</label>
+                                        <div class="input-wrapper">
+                                            <select id="manage-product-select">
+                                                <option value="">-- Choose product --</option>
+                                            </select>
+                                            <i class="fa-solid fa-boxes-stacked input-icon"></i>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="btn-group">
-                                    <button type="button" id="edit-product-btn" class="btn btn-outline btn-sm"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
-                                    <button type="button" id="transfer-product-btn" class="btn btn-outline btn-sm"><i class="fa-solid fa-right-left"></i> Transfer</button>
-                                    <button type="button" id="delete-product-btn" class="btn btn-danger btn-sm"><i class="fa-regular fa-trash-can"></i> Delete</button>
+                                    <div class="form-group flex-1" style="display: flex; align-items: flex-end;">
+                                        <div class="btn-group" style="width: 100%;">
+                                            <button type="button" id="edit-product-btn" class="btn btn-outline btn-sm" title="Edit"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                                            <button type="button" id="transfer-product-btn" class="btn btn-outline btn-sm" title="Transfer"><i class="fa-solid fa-right-left"></i> Shift</button>
+                                            <button type="button" id="delete-product-btn" class="btn btn-danger btn-sm" title="Delete"><i class="fa-regular fa-trash-can"></i></button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -246,30 +267,40 @@
                         </div>
                         <div class="card-body">
                             <form id="issue-asset-form">
-                                <div class="form-group">
-                                    <label for="issue-product-select">Product Category</label>
-                                    <div class="input-wrapper">
-                                        <select id="issue-product-select" required>
-                                            <option value="">-- Choose product --</option>
-                                        </select>
-                                        <i class="fa-solid fa-box input-icon"></i>
+                                <div class="form-row">
+                                    <div class="form-group flex-1">
+                                        <label for="issue-product-select">Product Category</label>
+                                        <div class="input-wrapper">
+                                            <select id="issue-product-select" required>
+                                                <option value="">-- Choose product --</option>
+                                            </select>
+                                            <i class="fa-solid fa-box input-icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label for="issue-serial">Asset Serial No</label>
+                                        <div class="input-wrapper">
+                                            <select id="issue-serial" required>
+                                                <option value="">-- Select Serial --</option>
+                                            </select>
+                                            <i class="fa-solid fa-barcode input-icon"></i>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="issue-serial">Asset Serial No</label>
+                                <div id="custom-serial-container" style="display: none; margin-bottom: 8px;">
                                     <div class="input-wrapper">
-                                        <input type="text" id="issue-serial" placeholder="Enter unique serial" required>
-                                        <i class="fa-solid fa-barcode input-icon"></i>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="issue-recipient">Recipient Employee Name</label>
-                                    <div class="input-wrapper">
-                                        <input type="text" id="issue-recipient" placeholder="Employee full name" required>
-                                        <i class="fa-solid fa-user input-icon"></i>
+                                        <input type="text" id="custom-serial-input" placeholder="Type custom serial number">
+                                        <i class="fa-solid fa-pen input-icon"></i>
                                     </div>
                                 </div>
                                 <div class="form-row">
+                                    <div class="form-group flex-2">
+                                        <label for="issue-recipient">Recipient Name</label>
+                                        <div class="input-wrapper">
+                                            <input type="text" id="issue-recipient" placeholder="Employee full name" required>
+                                            <i class="fa-solid fa-user input-icon"></i>
+                                        </div>
+                                    </div>
                                     <div class="form-group flex-1">
                                         <label for="issue-recipient-id">Emp ID</label>
                                         <div class="input-wrapper">
@@ -277,11 +308,13 @@
                                             <i class="fa-solid fa-id-card input-icon"></i>
                                         </div>
                                     </div>
-                                    <div class="form-group flex-2">
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group flex-1">
                                         <label for="issue-department-select">Department</label>
                                         <div class="input-wrapper">
                                             <select id="issue-department-select" required>
-                                                <option value="">-- Choose Dept --</option>
+                                                <option value="">-- Dept --</option>
                                                 <option value="sales">sales</option>
                                                 <option value="it">it</option>
                                                 <option value="hr">hr</option>
@@ -291,6 +324,16 @@
                                                 <option value="Other">Other (Specify)</option>
                                             </select>
                                             <i class="fa-solid fa-building input-icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label for="issue-type">Loan Type</label>
+                                        <div class="input-wrapper">
+                                            <select id="issue-type">
+                                                <option value="Permanent">Permanent</option>
+                                                <option value="Temporary">Temporary</option>
+                                            </select>
+                                            <i class="fa-solid fa-business-time input-icon"></i>
                                         </div>
                                     </div>
                                 </div>
@@ -305,20 +348,17 @@
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group flex-1">
-                                        <label for="issue-type">Loan Type</label>
-                                        <div class="input-wrapper">
-                                            <select id="issue-type">
-                                                <option value="Permanent">Permanent</option>
-                                                <option value="Temporary">Temporary</option>
-                                            </select>
-                                            <i class="fa-solid fa-business-time input-icon"></i>
-                                        </div>
-                                    </div>
-                                    <div class="form-group flex-1">
                                         <label for="issue-start-date">Date Issued</label>
                                         <div class="input-wrapper">
                                             <input type="date" id="issue-start-date" required>
                                             <i class="fa-solid fa-calendar-days input-icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label for="issue-specification">Specification</label>
+                                        <div class="input-wrapper">
+                                            <input type="text" id="issue-specification" placeholder="Specifications">
+                                            <i class="fa-solid fa-circle-info input-icon"></i>
                                         </div>
                                     </div>
                                 </div>
@@ -329,7 +369,7 @@
                                         <i class="fa-solid fa-calendar-check input-icon"></i>
                                     </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-circle-arrow-up"></i> Allocate Asset</button>
+                                <button type="submit" class="btn btn-primary btn-block" style="margin-top: 4px;"><i class="fa-solid fa-circle-arrow-up"></i> Allocate Asset</button>
                             </form>
                         </div>
                     </div>
@@ -341,26 +381,22 @@
                         </div>
                         <div class="card-body">
                             <form id="return-asset-form">
-                                <div class="form-group">
-                                    <label for="return-search-key">Search Serial / Emp ID</label>
-                                    <div class="input-wrapper">
-                                        <input type="text" id="return-search-key" placeholder="Enter serial key or Emp ID">
-                                        <i class="fa-solid fa-magnifying-glass input-icon"></i>
+                                <div class="form-row">
+                                    <div class="form-group flex-1">
+                                        <label for="return-search-key">Search Serial / Emp ID</label>
+                                        <div class="input-wrapper">
+                                            <input type="text" id="return-search-key" placeholder="Search key or ID">
+                                            <i class="fa-solid fa-magnifying-glass input-icon"></i>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="form-group">
-                                    <div class="checkbox-container">
-                                        <input type="checkbox" id="return-manual-mode-chk">
-                                        <label for="return-manual-mode-chk">Manual Return (Asset not in database)</label>
-                                    </div>
-                                </div>
-                                <div class="form-group" id="return-select-container">
-                                    <label for="return-asset-select">Select Active Loan</label>
-                                    <div class="input-wrapper">
-                                        <select id="return-asset-select">
-                                            <option value="">-- Choose active asset --</option>
-                                        </select>
-                                        <i class="fa-solid fa-list-check input-icon"></i>
+                                    <div class="form-group flex-1" id="return-select-container">
+                                        <label for="return-asset-select">Select Active Asset</label>
+                                        <div class="input-wrapper">
+                                            <select id="return-asset-select">
+                                                <option value="">-- Choose asset --</option>
+                                            </select>
+                                            <i class="fa-solid fa-list-check input-icon"></i>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="form-row">
@@ -387,18 +423,20 @@
                                             <i class="fa-solid fa-calendar-check input-icon"></i>
                                         </div>
                                     </div>
-                                    <div class="form-group flex-2">
+                                    <div class="form-group flex-1">
                                         <label for="return-remark">Remarks</label>
                                         <div class="input-wrapper">
-                                            <input type="text" id="return-remark" placeholder="Return condition, notes, etc.">
+                                            <input type="text" id="return-remark" placeholder="Return condition">
                                             <i class="fa-solid fa-comment-dots input-icon"></i>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <div class="checkbox-container danger-checkbox">
-                                        <input type="checkbox" id="return-ewaste-chk">
-                                        <label for="return-ewaste-chk" class="text-danger">Damaged → Dispose to E-Waste Vault</label>
+                                <div class="form-row" style="margin-top: 4px; margin-bottom: 8px;">
+                                    <div class="form-group flex-1">
+                                        <div class="checkbox-container danger-checkbox" style="padding: 6px 10px;">
+                                            <input type="checkbox" id="return-ewaste-chk">
+                                            <label for="return-ewaste-chk" class="text-danger" style="font-size: 11px; margin-bottom: 0; font-weight: 600; white-space: nowrap; margin-left: 6px;">Damaged (E-Waste)</label>
+                                        </div>
                                     </div>
                                 </div>
                                 <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-circle-arrow-down"></i> Process Return</button>
@@ -423,8 +461,9 @@
                         </div>
                         <div class="controls-right">
                             <button id="toggle-forms-btn" class="btn btn-outline" style="margin-right: 8px;"><i class="fa-solid fa-chevron-up"></i> Hide Forms</button>
-                            <button id="table-import-btn" class="btn btn-success" title="Import📥" style="margin-right: 8px;"><i class="fa-solid fa-file-import"></i> IMPORT EXCEL</button>
-                            <button id="table-export-btn" class="btn btn-primary"><i class="fa-solid fa-file-excel"></i> EXPORT EXCEL</button>
+                            <button id="table-import-btn" class="btn btn-success" title="Import" style="margin-right: 8px;"><i class="fa-solid fa-file-import"></i> IMPORT EXCEL</button>
+                            <button id="table-export-btn" class="btn btn-primary" style="margin-right: 8px;"><i class="fa-solid fa-file-excel"></i> EXPORT EXCEL</button>
+                            <button id="table-clear-btn" class="btn btn-danger" title="Delete Data"><i class="fa-regular fa-trash-can"></i> DELETE DATA</button>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -434,6 +473,7 @@
                                     <th>Serial</th>
                                     <th>Product</th>
                                     <th>Model</th>
+                                    <th>Specification</th>
                                     <th>User</th>
                                     <th>Emp ID</th>
                                     <th>Dept</th>
@@ -447,7 +487,7 @@
                             </thead>
                             <tbody id="inventory-table-body">
                                 <tr>
-                                    <td colspan="12" class="text-center">Loading assets logs...</td>
+                                    <td colspan="13" class="text-center">Loading assets logs...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -490,6 +530,13 @@
                             </tbody>
                         </table>
                     </div>
+                    <div class="table-pagination">
+                        <span id="ewaste-pagination-label">Page 1 / 1</span>
+                        <div class="pagination-buttons">
+                            <button id="ewaste-pagination-prev" class="btn btn-outline btn-sm"><i class="fa-solid fa-chevron-left"></i> Prev</button>
+                            <button id="ewaste-pagination-next" class="btn btn-outline btn-sm">Next <i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -518,6 +565,13 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                    <div class="table-pagination">
+                        <span id="returns-pagination-label">Page 1 / 1</span>
+                        <div class="pagination-buttons">
+                            <button id="returns-pagination-prev" class="btn btn-outline btn-sm"><i class="fa-solid fa-chevron-left"></i> Prev</button>
+                            <button id="returns-pagination-next" class="btn btn-outline btn-sm">Next <i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -660,6 +714,10 @@
                         <label for="edit-p-qty-input">Quantity</label>
                         <input type="number" id="edit-p-qty-input" min="0" required>
                     </div>
+                    <div class="form-group">
+                        <label for="edit-p-min-stock-input">Min Stock Alert Threshold</label>
+                        <input type="number" id="edit-p-min-stock-input" min="1" value="5" required>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline" data-modal="edit-product-modal">Cancel</button>
@@ -695,55 +753,110 @@
         </div>
     </div>
 
-    <!-- MODAL: MANUAL RETURN -->
-    <div id="manual-return-modal" class="modal">
-        <div class="modal-content">
+
+
+    <!-- MODAL: SHIFT / REASSIGN ASSET -->
+    <div id="shift-asset-modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
             <div class="modal-header">
-                <h3>Manual Return (Asset not in database)</h3>
-                <span class="close-btn" data-modal="manual-return-modal">&times;</span>
+                <h3><i class="fa-solid fa-right-left" style="color: var(--warning);"></i> Shift / Reassign Asset Location</h3>
+                <span class="close-btn" data-modal="shift-asset-modal">&times;</span>
             </div>
-            <form id="manual-return-form">
+            <form id="shift-asset-form">
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="manual-return-product-select">Product Type</label>
-                        <div class="input-wrapper">
-                            <select id="manual-return-product-select" required>
-                                <option value="">-- Choose product --</option>
-                            </select>
-                            <i class="fa-solid fa-box input-icon"></i>
+                    <input type="hidden" id="shift-issue-id">
+
+                    <!-- SELECT ACTIVE ASSET SECTION -->
+                    <div id="shift-modal-select-container">
+                        <div class="form-row">
+                            <div class="form-group flex-1">
+                                <label for="shift-modal-search-key">Search Serial / Emp ID</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="shift-modal-search-key" placeholder="Type serial key or Emp ID">
+                                    <i class="fa-solid fa-magnifying-glass input-icon"></i>
+                                </div>
+                            </div>
+                            <div class="form-group flex-1">
+                                <label for="shift-modal-asset-select">Select Active Asset to Shift</label>
+                                <div class="input-wrapper">
+                                    <select id="shift-modal-asset-select">
+                                        <option value="">-- Choose active asset --</option>
+                                    </select>
+                                    <i class="fa-solid fa-list-check input-icon"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="manual-return-serial">Serial No</label>
-                        <div class="input-wrapper">
-                            <input type="text" id="manual-return-serial" required placeholder="Serial key">
-                            <i class="fa-solid fa-key input-icon"></i>
+                    
+                    <!-- CURRENT ASSET INFO BADGE -->
+                    <div style="background: rgba(245, 158, 11, 0.08); border-left: 4px solid var(--warning); padding: 10px 14px; border-radius: 6px; margin-bottom: 14px;">
+                        <div style="font-size: 13px; font-weight: 700; color: #b45309;" id="shift-asset-serial-label">Serial: —</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;" id="shift-asset-current-info">Current Recipient: — | Dept: —</div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-2">
+                            <label for="shift-recipient">New Holder Name</label>
+                            <div class="input-wrapper">
+                                <input type="text" id="shift-recipient" placeholder="New employee full name" required>
+                                <i class="fa-solid fa-user input-icon"></i>
+                            </div>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="shift-recipient-id">New Emp ID</label>
+                            <div class="input-wrapper">
+                                <input type="text" id="shift-recipient-id" placeholder="ID" required>
+                                <i class="fa-solid fa-id-card input-icon"></i>
+                            </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="manual-return-emp">Employee Name</label>
-                        <div class="input-wrapper">
-                            <input type="text" id="manual-return-emp" required placeholder="Name">
-                            <i class="fa-solid fa-user input-icon"></i>
+                    
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="shift-department-select">New Department</label>
+                            <div class="input-wrapper">
+                                <select id="shift-department-select" required>
+                                    <option value="">-- Choose Dept --</option>
+                                    <option value="sales">sales</option>
+                                    <option value="it">it</option>
+                                    <option value="hr">hr</option>
+                                    <option value="accounts">accounts</option>
+                                    <option value="technical">technical</option>
+                                    <option value="ohc">ohc</option>
+                                    <option value="Other">Other (Specify)</option>
+                                </select>
+                                <i class="fa-solid fa-building input-icon"></i>
+                            </div>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="shift-date">Shift Transfer Date</label>
+                            <div class="input-wrapper">
+                                <input type="date" id="shift-date" required>
+                                <i class="fa-solid fa-calendar-days input-icon"></i>
+                            </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="manual-return-dept">Department</label>
-                        <div class="input-wrapper">
-                            <input type="text" id="manual-return-dept" required placeholder="Dept">
-                            <i class="fa-solid fa-building-user input-icon"></i>
+                    <div class="form-row" id="shift-department-manual-row" style="display: none;">
+                        <div class="form-group flex-1">
+                            <label for="shift-department-manual">Specify Department</label>
+                            <div class="input-wrapper">
+                                <input type="text" id="shift-department-manual" placeholder="Enter department name">
+                                <i class="fa-solid fa-pen input-icon"></i>
+                            </div>
                         </div>
                     </div>
+                    
                     <div class="form-group">
-                        <div class="checkbox-container danger-checkbox">
-                            <input type="checkbox" id="manual-return-ewaste">
-                            <label for="manual-return-ewaste" class="text-danger">Dispose straight to E-Waste</label>
+                        <label for="shift-remark">Transfer Reason / Remarks</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="shift-remark" placeholder="e.g. Shifted PC from IT to Sales dept">
+                            <i class="fa-solid fa-comment-dots input-icon"></i>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline" data-modal="manual-return-modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Record Manual Return</button>
+                    <button type="button" class="btn btn-outline" data-modal="shift-asset-modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning"><i class="fa-solid fa-right-left"></i> Process Shift Transfer</button>
                 </div>
             </form>
         </div>
@@ -827,7 +940,7 @@
             </div>
             <form id="import-excel-form">
                 <div class="modal-body">
-                    <p class="warning-text">Make sure the Excel sheet headers match exactly: <b>Product, Model, Serial, User, Emp ID, Dept, Type, Issue Date, Return Date</b>.</p>
+                    <p class="warning-text">Import Excel sheet to populate <b>Product Stock Inventory</b>. Supported headers: <b>Product/Category, Model, Quantity, Specification</b>.</p>
                     <div class="form-group">
                         <label for="excel-file-input">Select Excel File (.xlsx)</label>
                         <input type="file" id="excel-file-input" accept=".xlsx" required>
@@ -841,12 +954,59 @@
         </div>
     </div>
 
+    <!-- MODAL: DELETE DATA -->
+    <div id="clear-data-modal" class="modal">
+        <div class="modal-content" style="max-width: 480px;">
+            <div class="modal-header">
+                <h3><i class="fa-regular fa-trash-can" style="color: var(--danger-color);"></i> Delete Data Options</h3>
+                <span class="close-btn" data-modal="clear-data-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 15px; color: var(--text-secondary);">Select what data you want to delete from the current workspace:</p>
+                <div class="form-group">
+                    <label for="clear-data-type-select">Deletion Type</label>
+                    <select id="clear-data-type-select" class="form-control">
+                        <option value="logs">Delete All Issued Asset Records Only</option>
+                        <option value="stock">Delete All Product Stock Only</option>
+                        <option value="all">Delete Workspace Data (Stock & Records)</option>
+                        <option value="reset_all">🔥 Full System Reset (Fresh Start - Delete EVERYTHING)</option>
+                    </select>
+                </div>
+                <p class="warning-text" style="margin-top: 10px;">⚠️ This action is permanent and cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" data-modal="clear-data-modal">Cancel</button>
+                <button type="button" id="confirm-clear-data-btn" class="btn btn-danger">Confirm Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3 style="color: var(--primary); display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-circle-question" style="color: var(--primary);"></i> 
+                    Confirm Action
+                </h3>
+                <span class="close-btn" id="confirm-close-btn">&times;</span>
+            </div>
+            <div class="modal-body" style="padding-top: 15px;">
+                <p id="confirm-modal-message" style="font-size: 14px; color: var(--text-color); font-weight: 500;"></p>
+            </div>
+            <div class="modal-footer" style="padding-top: 0; border-top: none;">
+                <button type="button" class="btn" id="confirm-cancel-btn" style="background-color: #f1f5f9; color: #475569; border: 1.5px solid #cbd5e1; border-radius: 8px; font-weight: 600; padding: 10px 18px;">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirm-ok-btn" style="border-radius: 8px; font-weight: 600; padding: 10px 18px;">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ========================================== -->
     <!--               TOAST SYSTEM                 -->
     <!-- ========================================== -->
     <div id="toast-container" class="toast-container"></div>
 
     <!-- App Logic -->
-    <script src="{{ url_for('static', filename='js/app.js') }}?v=2.0.1"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}?v=2.5.0"></script>
 </body>
 </html>

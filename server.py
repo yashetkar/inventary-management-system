@@ -26,7 +26,7 @@ if __name__ == "__main__":
     local_ip = get_local_ip()
     
     print("\n" + "="*60)
-    print("      ASSET MANAGEMENT SYSTEM - SERVER STARTED")
+    print("ASSET MANAGEMENT SYSTEM - SERVER STARTED")
     print("="*60)
     print(f" Local Address:   http://127.0.0.1:{port}")
     if local_ip != "127.0.0.1":
